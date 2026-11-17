@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis colmenares</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icono-180.png">
+<link rel="icon" href="icono-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Colmenares">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#3f6b1f">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Campo, compacto: banda verde arriba, pestañas con íconos abajo, renglones densos y números en letra de máquina */
+:root{--bg:#f4f5f0;--card:#ffffff;--tx:#161a12;--mut:#5b6352;--ac:#3f6b1f;--acx:#ffffff;--hi:#f2b705;--hix:#161a12;--bd:#d5dbcb;--ok:#2f7d32;--bad:#b3261e;
+  --f-ui:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;--f-head:"Barlow Condensed","Arial Narrow",sans-serif;--f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121510;--card:#1b2017;--tx:#e9ede3;--mut:#9da592;--ac:#7fae4f;--acx:#10140d;--hi:#f2b705;--hix:#161a12;--bd:#2f3729;--ok:#8fd18f;--bad:#ff8a80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121510;--card:#1b2017;--tx:#e9ede3;--mut:#9da592;--ac:#7fae4f;--acx:#10140d;--hi:#f2b705;--hix:#161a12;--bd:#2f3729;--ok:#8fd18f;--bad:#ff8a80;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 var(--f-ui);padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+header.top{background:var(--ac);color:var(--acx);padding-block:12px 10px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+header.top .in{max-width:620px;margin:0 auto}
+h1{font:700 22px/1 var(--f-head);text-transform:uppercase;letter-spacing:.03em;margin:0}
+#estado{font-size:12.5px;margin-top:4px;opacity:.9;color:inherit!important}
+main{max-width:620px;margin:0 auto;padding-block:10px;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 8px;border:0;background:none;color:var(--mut);font:600 11px/1.1 var(--f-ui)}
+nav.tabs button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button.on{color:var(--ac)}
+nav.tabs button:focus-visible{outline:2px solid var(--ac);outline-offset:-4px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+label{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:7px 0 3px}
+input,textarea,select{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:500 16px/1.25 var(--f-ui)}
+input[type=number],input[inputmode=decimal],input[inputmode=numeric]{font-family:var(--f-num);font-size:16px}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--ac);outline-offset:-1px;border-color:var(--ac)}
+textarea{min-height:64px}
+.row{display:flex;gap:6px}.row>*{flex:1;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:6px 11px;border:1px solid var(--bd);border-radius:999px;background:var(--card);color:var(--tx);font:600 14px/1.2 var(--f-ui)}
+.chip.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}
+h3{font:700 13px/1 var(--f-head);margin:12px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.07em}
+.save{width:100%;padding:12px;border:0;border-radius:10px;background:var(--hi);color:var(--hix);font:700 17px/1 var(--f-head);text-transform:uppercase;letter-spacing:.05em}
+.msg{text-align:center;color:var(--ok);min-height:20px;margin-top:6px;font-size:14px}
+.msg.err{color:var(--bad)}
+.v{border-bottom:1px solid var(--bd);padding:7px 0;font-size:14px}.v:last-child{border:0}
+.v b{display:block;font-size:15px}.mut{color:var(--mut);font-size:13px}
+.del{float:right;border:0;background:none;color:var(--bad);font:600 13px var(--f-ui)}
+.ed{float:right;border:0;background:none;color:var(--ac);font:600 13px var(--f-ui);margin-right:8px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 7px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
+th{font:700 12px/1.1 var(--f-head);text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+td{font-family:var(--f-num);font-size:12.5px}
+th:first-child,td:first-child{text-align:left;font-family:var(--f-ui);font-size:13px}
+.kpi{display:flex;gap:6px;margin-bottom:10px}.kpi div{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px;text-align:center}
+.kpi b{display:block;font:500 20px/1.1 var(--f-num)}
+.kpi .mut{font-size:12px}
+.warn{color:var(--bad);font-size:13px;min-height:0;margin-top:4px}
+.sec{width:100%;padding:9px;margin-top:6px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:600 15px var(--f-ui)}
+details{margin-top:7px;border:1px solid var(--bd);border-radius:8px;padding:6px 10px}summary{font-weight:600;font-size:14px;cursor:pointer;color:var(--tx)}
+#coltot{font-size:15px!important}
+#vres{font-family:var(--f-num);font-size:14px}
+details.rs{padding:0;margin-bottom:8px}
+details.rs>summary{list-style:none;padding:10px 12px;cursor:pointer}
+details.rs>summary::-webkit-details-marker{display:none}
+details.rs[open]>summary{border-bottom:1px solid var(--bd)}
+.rs-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rs-n{min-width:0}.rs-n b{display:block;font-size:16px}.rs-n .mut{font-size:12.5px}
+.rs-c{text-align:right;flex:none}.rs-c b{display:block;font:500 22px/1 var(--f-num)}.rs-c .mut{font-size:11px}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.tag{font:500 11.5px/1 var(--f-num);padding:4px 7px;border-radius:5px;background:var(--bg);border:1px solid var(--bd);color:var(--tx)}
+.tag.bad{color:var(--bad);border-color:var(--bad)}
+.rs-b{padding:4px 12px 12px}
+.blk h4{font:700 12.5px/1 var(--f-head);text-transform:uppercase;letter-spacing:.07em;color:var(--ac);margin:12px 0 4px}
+.kv{display:grid;grid-template-columns:1fr auto;column-gap:12px}
+.kv span,.kv em{padding:4px 0;border-bottom:1px solid var(--bd);font-size:13.5px}
+.kv span{color:var(--mut);min-width:0}
+.kv em{font:500 13px/1.35 var(--f-num);font-style:normal;text-align:right}
+.kv em.pos{color:var(--ok)}.kv em.neg{color:var(--bad)}.kv em.tot{font-weight:700;color:var(--tx)}
+.ob{margin:4px 0;font-size:13.5px}
+details.rs:not([open])>summary::after{content:"Ver todo ▾";display:block;font:600 12px var(--f-ui);color:var(--ac);margin-top:6px}
+details.rs[open]>summary::after{content:"Cerrar ▴";display:block;font:600 12px var(--f-ui);color:var(--ac);margin-top:6px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.modo{display:flex;background:rgba(0,0,0,.18);border-radius:999px;padding:3px}
+.modo button{border:0;background:none;color:inherit;font:700 13px/1 var(--f-ui);padding:7px 12px;border-radius:999px;opacity:.85}
+.modo button.on{background:var(--acx);color:var(--ac);opacity:1}
+.modo button:focus-visible{outline:2px solid var(--acx);outline-offset:2px}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+.mv{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)}.mv:last-child{border:0}
+.mv-l{min-width:0}.mv-l b{display:block;font-size:14.5px}.mv-l .mut{font-size:12.5px}
+.mv-r{text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:2px}.mv-r em{font:500 13.5px/1.2 var(--f-num);font-style:normal}
+.mv-r .ed,.mv-r .del{float:none;margin:0 0 0 8px}
+.bars{display:grid;gap:8px;margin-top:10px}
+.br-t{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}.br-t span{min-width:0}.br-t em{font:500 12px/1.3 var(--f-num);font-style:normal;color:var(--mut);text-align:right}
+.br-b{height:8px;background:var(--bg);border-radius:4px;margin-top:3px;overflow:hidden}.br-b i{display:block;height:100%;background:var(--ac);border-radius:0 4px 4px 0}
+.leg{display:flex;gap:14px;font-size:12px;color:var(--mut);margin:8px 0 2px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+i.ing{background:var(--ac)}i.gas{background:var(--bad)}
+table.caja td.cb{width:28%;min-width:70px}table.caja td.cb i{display:block;height:5px;border-radius:0 3px 3px 0;margin:2px 0;min-width:0}
+.warnc{border-color:var(--hi);font-size:14px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in"><div class="hd"><h1>Mis colmenares</h1><div class="modo"><button id="m-campo" class="on">Campo</button><button id="m-gest">Gestión</button></div></div><div id="estado" role="button" tabindex="0" style="cursor:pointer"></div></div></header>
+<main>
+<div class="card" id="cfg" hidden>
+<b>Conexión con la planilla Gestión apícola</b>
+<div class="mut" style="margin-top:4px">Poné la clave de la planilla una sola vez. Queda guardada en este teléfono.</div>
+<label>Clave</label><input id="cfg-clave" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ej: palabra-palabra-1234">
+<button type="button" class="save" id="cfg-ok" style="margin-top:10px">Conectar</button>
+<div class="msg" id="cfg-msg"></div>
+<div class="mut" id="cfg-info" style="margin-top:4px"></div>
+</div>
+<nav class="tabs" id="nav-c">
+<button id="t-n" class="on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Visita</button>
+<button id="t-h"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Historial</button>
+<button id="t-r"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Resumen</button>
+<button id="t-t"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M6 9h12M6 15h12"/></svg>Tambores</button>
+<button id="t-c"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Campañas</button>
+</nav>
+<nav class="tabs" id="nav-g" hidden>
+<button id="g-c"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Cargar</button>
+<button id="g-m"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Movimientos</button>
+<button id="g-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Tablero</button>
+<button id="g-p"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 8h5v5"/></svg>Precios</button>
+<button id="g-k"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 10l3 3 3-3"/></svg>Canjes</button>
+</nav>
+
+<section id="v-n">
+<div class="card">
+<b id="vform" hidden></b>
+<div class="row" style="align-items:flex-end"><div style="flex:1.6"><label>Colmenar</label>
+<input id="col" list="cols" placeholder="Ej: Gomez" autocomplete="off"></div>
+<div style="flex:0 0 138px"><label>Fecha</label>
+<input id="fec" type="date" style="padding:8px 6px;font-size:15px"></div></div>
+<datalist id="cols"></datalist>
+<h3>Tareas</h3>
+<div class="chips" id="tar"></div>
+<div id="subtar"></div>
+<div id="d-ali" hidden><h3>Artificial</h3><div class="row"><div><label>Jarabe (litros)</label><input id="jar" type="text" inputmode="decimal" autocomplete="off"></div><div><label>Torta (kg)</label><input id="tor" type="text" inputmode="decimal" autocomplete="off"></div></div><div class="chips" style="margin-top:8px"><button type="button" class="chip" id="prom3">Promotor +3 ml</button><button type="button" class="chip" id="prom5">Promotor +5 ml</button></div><h3>Natural</h3><label>Néctar</label><div class="chips" id="natn"></div><label>Polen</label><div class="chips" id="natp"></div></div>
+<div id="d-cur" hidden><h3>Cura</h3><div class="chips" id="cur"></div><label>Dosis / método</label><input id="curd" placeholder="Ej: goteo 50 ml por colmena"><label>Lote del producto o proveedor</label><input id="curl" placeholder="Ej: lote 4455, o el nombre del proveedor" autocomplete="off"></div>
+<div id="d-var" hidden><h3>Monitoreo de varroa</h3><div class="mut">Por muestra: abejas y varroas contadas.</div><div id="vrows"></div><button type="button" class="sec" id="vadd">+ Agregar muestra</button><div id="vres" style="margin-top:8px;font-weight:600"></div></div>
+<div id="d-tra" hidden><h3>Traslado</h3><div class="mut">Las colmenas trasladadas se suman solas en el colmenar de destino.</div><label>Destino</label><select id="dest"></select><input id="dest2" hidden placeholder="Nombre del colmenar de destino" style="margin-top:6px"><div class="row"><div><label>Colmenas movidas</label><input id="trac" type="number" inputmode="numeric" min="0"></div><div><label>Núcleos movidos</label><input id="tran" type="number" inputmode="numeric" min="0"></div><div><label>Enjambres movidos</label><input id="trae" type="number" inputmode="numeric" min="0"></div></div></div>
+<div id="d-mul" hidden><h3>Multiplicación</h3><div class="row"><div><label>Núcleos</label><input id="muln" type="number" inputmode="numeric" min="0"></div><div><label>Canasto técnico</label><input id="mulc" type="number" inputmode="numeric" min="0"></div></div><div class="row"><div><label>Celdas reales</label><input id="mulcr" type="number" inputmode="numeric" min="0"></div><div><label>Reinas fecundadas</label><input id="mulrf" type="number" inputmode="numeric" min="0"></div><div><label>Reinas vírgenes</label><input id="mulrv" type="number" inputmode="numeric" min="0"></div></div></div>
+<h3>Colmenas</h3>
+<div id="coltot" style="font-size:17px;font-weight:600"></div><div class="mut" id="colprev"></div>
+<details id="d-ab"><summary>Altas y bajas</summary><div class="mut" style="margin-top:6px">Bajas</div><div class="row"><div><label>Muertas</label><input id="b_mu" type="number" inputmode="numeric" min="0"></div><div><label>Zanganeras</label><input id="b_za" type="number" inputmode="numeric" min="0"></div><div><label>Huérfanas</label><input id="b_hu" type="number" inputmode="numeric" min="0"></div></div><div class="row"><div><label>Loque (LA/LE)</label><input id="b_lo" type="number" inputmode="numeric" min="0"></div><div><label>Cría yesificada</label><input id="b_cy" type="number" inputmode="numeric" min="0"></div><div><label>Otra causa</label><input id="b_ot" type="number" inputmode="numeric" min="0"></div></div><div class="mut" style="margin-top:10px">Altas</div><div class="row"><div><label>Núcleos pasados a cámara</label><input id="al_nu" type="number" inputmode="numeric" min="0"></div><div><label>Enjambres pasados a cámara</label><input id="al_en" type="number" inputmode="numeric" min="0"></div></div><div class="row"><div><label>Ingresadas (compradas)</label><input id="al_in" type="number" inputmode="numeric" min="0"></div></div></details>
+<label id="colml">Colmenas en el colmenar</label>
+<input id="colm" type="number" inputmode="numeric" min="0" placeholder="Cantidad de colmenas">
+<details id="d-cat"><summary>Categoría (aproximada)</summary><div class="mut" style="margin-top:6px">I: más de 7 cuadros de abejas · II: de 5 a 7 · III: menos de 5</div><div class="row"><div><label>I · Fuertes</label><input id="cat1" type="number" inputmode="numeric" min="0"></div><div><label>II · Medias</label><input id="cat2" type="number" inputmode="numeric" min="0"></div><div><label>III · Débiles</label><input id="cat3" type="number" inputmode="numeric" min="0"></div></div><div class="mut" id="catsum" style="margin-top:6px"></div></details>
+<h3>Alzas melarias</h3>
+<div class="row"><div><label>1/2 alza</label><input id="q_m" type="number" inputmode="numeric" min="0"></div><div><label>Alza</label><input id="q_s" type="number" inputmode="numeric" min="0"></div></div>
+<h3>Material</h3>
+<div class="row"><div><label>Nucleros</label><input id="a_n" type="number" inputmode="numeric" min="0"></div><div><label>Cámaras de cría</label><input id="a_c" type="number" inputmode="numeric" min="0"></div></div>
+<div class="row"><div><label>1/2 alza</label><input id="a_m" type="number" inputmode="numeric" min="0"></div><div><label>Alza</label><input id="a_s" type="number" inputmode="numeric" min="0"></div></div>
+<div id="d-cos" hidden><h3>Cosecha</h3>
+<div class="row"><div><label>1/2 alza</label><input id="c_m" type="number" inputmode="numeric" min="0"></div><div><label>Alza</label><input id="c_s" type="number" inputmode="numeric" min="0"></div></div><label>Llenado del lote (%)</label><input id="c_p" type="number" inputmode="numeric" min="1" max="100" placeholder="100"><div class="chips" id="pchips" style="margin-top:6px"><button type="button" class="chip" data-p="100">100%</button><button type="button" class="chip" data-p="80">80%</button><button type="button" class="chip" data-p="70">70%</button><button type="button" class="chip" data-p="60">60%</button></div><label>Lote de extracción</label><input id="c_lote" autocomplete="off"><div class="mut" id="kgest" style="margin-top:8px"></div></div>
+<label>Observaciones</label>
+<textarea id="obs" placeholder="Ej: bien calzadas de miel en cámara, quedaron con una media con 3-4 cuadros de miel"></textarea>
+</div>
+<button class="save" id="guardar">Guardar visita</button>
+<button class="sec" id="vcancel" hidden>Cancelar edición</button>
+<div class="msg" id="msg"></div>
+</section>
+
+<section id="v-h" hidden>
+<div class="card"><label>Filtrar por colmenar</label><input id="filtro" list="cols" placeholder="Todos" autocomplete="off"></div>
+<div class="card" id="lista"></div>
+</section>
+
+<section id="v-r" hidden>
+<div class="kpi"><div><b id="k1">0</b><span class="mut">visitas</span></div><div><b id="k2">0</b><span class="mut">colmenares</span></div><div><b id="k3">0</b><span class="mut">colmenas</span></div></div>
+<div id="resumen"></div>
+</section>
+<section id="v-t" hidden>
+<div class="card"><label>Campaña</label><select id="tfil"></select></div>
+<div class="kpi"><div><b id="tk1">0</b><span class="mut">tambores míos</span></div><div><b id="tk2">0</b><span class="mut">kg</span></div><div><b id="tk3">0</b><span class="mut">sin datos de Villamora</span></div></div>
+<div class="card">
+<b id="tform">Nuevo tambor</b>
+<label>Campaña</label><select id="tcamp"></select>
+<div class="row"><div><label>N° de llenado</label><input id="tnum" type="number" inputmode="numeric" min="1"></div><div><label>N° de etiqueta</label><input id="tet" autocomplete="off"></div></div>
+<div class="warn" id="tw"></div>
+<h3>Tipo</h3><div class="chips" id="ttipo"></div>
+<label>Lote de extracción</label><input id="tlote" list="lotes" autocomplete="off" placeholder="De la cosecha (opcional)"><datalist id="lotes"></datalist>
+<div class="row"><div><label>Tara impresa (kg)</label><input id="ttara" type="text" inputmode="decimal" autocomplete="off"></div><div><label>Colmenar de origen</label><input id="tcol" list="cols" placeholder="Ej: Gomez" autocomplete="off"></div></div>
+<h3>Productor</h3><div class="chips" id="tprod"></div><input id="tprod2" hidden placeholder="Nombre del productor" style="margin-top:6px">
+<label>Destino / estado</label><select id="tdest"></select>
+<h3>Datos de Villamora (cuando llegue la planilla)</h3>
+<div class="row"><div><label>Bruto (kg)</label><input id="tbru" type="text" inputmode="decimal" autocomplete="off"></div><div><label>Neto (kg)</label><input id="tnet" type="text" inputmode="decimal" autocomplete="off" placeholder="bruto − tara"></div></div>
+<label>Color</label><input id="tcolor" placeholder="Ej: 35 mm" autocomplete="off">
+<label>Observaciones</label><input id="tobs" autocomplete="off">
+</div>
+<button class="save" id="tguardar">Guardar tambor</button>
+<button class="sec" id="tcancel" hidden>Cancelar edición</button>
+<div class="msg" id="tmsg"></div>
+<div class="card" id="tlista"></div>
+</section>
+<section id="v-c" hidden><div class="card scroll" id="camp"></div><div class="card" id="campg"></div>
+</section>
+<section id="v-gc" class="g" hidden>
+<div class="card">
+<b id="g-form">Nuevo movimiento</b>
+<h3>¿De qué es?</h3><div class="chips" id="g-amb"></div>
+<h3>Tipo</h3><div class="chips" id="g-tipo"></div>
+<h3>Categoría</h3><div class="chips" id="g-cat"></div>
+<div class="row" style="align-items:flex-end"><div style="flex:1.6"><label>Detalle</label><input id="g-det" autocomplete="off" placeholder="Ej: gasoil, azúcar 500 kg"></div><div style="flex:0 0 138px"><label>Fecha</label><input id="g-fec" type="date" style="padding:8px 6px;font-size:15px"></div></div>
+<div id="g-unibox" hidden><h3>Se paga en</h3><div class="chips" id="g-uni"></div></div>
+<div id="g-pesos"><label>Monto ($)</label><input id="g-monto" type="text" inputmode="decimal" autocomplete="off"></div>
+<div id="g-mielbox" hidden><div class="row" style="align-items:flex-end"><div><label id="g-cantl">Baldes (12 kg)</label><input id="g-cant" type="text" inputmode="decimal" autocomplete="off"></div><div><label>Miel</label><div class="chips" id="g-color"></div></div></div></div>
+<div id="g-kgbox" hidden><div class="row" style="align-items:flex-end"><div><label>Kg vendidos (para el balance de miel)</label><input id="g-kgv" type="text" inputmode="decimal" autocomplete="off"></div><div><label>Miel</label><div class="chips" id="g-color2"></div></div></div></div>
+<div id="g-colbox" hidden><label>Colmenar</label><input id="g-col" list="cols" autocomplete="off"></div>
+<div class="mut" id="g-val" style="margin-top:6px"></div>
+</div>
+<button class="save" id="g-guardar">Guardar movimiento</button>
+<button class="sec" id="g-cancel" hidden>Cancelar edición</button>
+<div class="msg" id="g-msg"></div>
+</section>
+
+<section id="v-gm" class="g" hidden>
+<div class="card"><div class="chips" id="gm-amb"></div><label>Mes</label><select id="gm-mes"></select></div>
+<div class="kpi"><div><b id="gm-i">0</b><span class="mut">ingresos</span></div><div><b id="gm-g">0</b><span class="mut">gastos</span></div><div><b id="gm-s">0</b><span class="mut">saldo</span></div></div>
+<div class="card" id="gm-lista"></div>
+</section>
+
+<section id="v-gt" class="g" hidden>
+<div class="card"><div class="chips" id="gt-amb"></div><label id="gt-perl">Ejercicio</label><select id="gt-per"></select></div>
+<div id="gt-body"></div>
+</section>
+
+<section id="v-gp" class="g" hidden>
+<div class="card">
+<b>Nueva cotización</b>
+<div class="row" style="align-items:flex-end"><div style="flex:1.6"><label>Comprador</label><input id="gp-comp" list="gp-comps" autocomplete="off" placeholder="Ej: Villamora"><datalist id="gp-comps"></datalist></div><div style="flex:0 0 138px"><label>Fecha</label><input id="gp-fec" type="date" style="padding:8px 6px;font-size:15px"></div></div>
+<div class="row"><div><label>Clara, hasta 50 mm ($/kg)</label><input id="gp-cl" type="text" inputmode="decimal" autocomplete="off"></div><div><label>Oscura, más de 50 mm ($/kg)</label><input id="gp-os" type="text" inputmode="decimal" autocomplete="off"></div></div>
+</div>
+<button class="save" id="gp-guardar">Guardar cotización</button>
+<div class="msg" id="gp-msg"></div>
+<div class="card" id="gp-lista"></div>
+</section>
+
+<section id="v-gk" class="g" hidden>
+<div class="card">
+<b>Nuevo canje de tambores</b>
+<div class="row" style="align-items:flex-end"><div style="flex:1.6"><label>Proveedor</label><input id="gk-prov" list="gk-provs" autocomplete="off" placeholder="Ej: Villamora"><datalist id="gk-provs"></datalist></div><div style="flex:0 0 138px"><label>Fecha</label><input id="gk-fec" type="date" style="padding:8px 6px;font-size:15px"></div></div>
+<h3>Tipo</h3><div class="chips" id="gk-tipo"></div>
+<div class="row"><div><label>Tambores vacíos recibidos</label><input id="gk-vac" type="number" inputmode="numeric" min="1"></div><div><label>Relación (vacíos por 1 lleno)</label><input id="gk-rel" type="number" inputmode="numeric" min="1" placeholder="Ej: 18"></div></div>
+<div class="mut" id="gk-info" style="margin-top:6px"></div>
+</div>
+<button class="save" id="gk-guardar">Guardar canje</button>
+<div class="msg" id="gk-msg"></div>
+<div id="gk-lista"></div>
+</section>
+
+</main>
+
+<script src="esquema.js"></script>
+<script>
+(function(){
+var TAREAS={"Verano":["Multiplicación","Cura","Monitoreo varroa","Cosecha","Mantenimiento de colmenar"],"Otoño":["Control de reservas","Cura","Monitoreo varroa","Cosecha","Mantenimiento de colmenar"],"Invierno":["Control de colmenar","Control de reservas","Monitoreo varroa"],"Primavera":["Multiplicación","Alimentación","Cura","Monitoreo varroa","Traslado"]};
+var $=function(i){return document.getElementById(i)};
+var visitas=[],camps=[],estacion="",tareas=[],cura=[],PROD=["Ácido oxálico","Flumetrina","Amitraz","Otro"],db=null,LS="colmenares_v1";
+
+function estDe(f){var m=+f.slice(5,7);return m==12||m<=2?"Verano":m<=5?"Otoño":m<=8?"Invierno":"Primavera"}
+function hoy(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function fmt(f){return f?f.split("-").reverse().join("-"):""}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function num(i){var v=parseInt($(i).value,10);return isNaN(v)?0:v}
+function numf(i){var v=parseFloat(String($(i).value).replace(",","."));return isNaN(v)?0:v}
+
+function tab(t){Array.prototype.forEach.call(document.querySelectorAll("section.g"),function(x){x.hidden=true});["n","h","r","t","c"].forEach(function(k){$("v-"+k).hidden=k!=t;$("t-"+k).classList.toggle("on",k==t)});if(t=="h")lista();if(t=="r")resumen();if(t=="t"){campOpts();tLista()}if(t=="c")campanias()}
+["n","h","r","t","c"].forEach(function(k){$("t-"+k).onclick=function(){tab(k)}});
+
+var LTAREAS=["Alimentación","Sanidad","Multiplicación","Cosecha","Traslado","Mantenimiento de colmenar","Otra"],SUB={"Sanidad":["Cura","Monitoreo varroa"],"Mantenimiento de colmenar":["Corte de pasto","Reparación de alambre","Aplicación de herbicida"]},promo=0,natN="",natP="",NIV=["Abundante","Bueno","Escaso","Nulo"];
+function esSub(n){return Object.keys(SUB).some(function(k){return SUB[k].indexOf(n)>=0})}
+function chipBtn(n,cont,fn){var b=document.createElement("button");b.type="button";b.className="chip"+(tareas.indexOf(n)>=0?" on":"");b.textContent=n;b.onclick=fn;cont.appendChild(b)}
+function chips(){
+  var t=$("tar");t.innerHTML="";
+  LTAREAS.concat(tareas.filter(function(x){return LTAREAS.indexOf(x)<0&&!esSub(x)})).forEach(function(n){chipBtn(n,t,function(){var i=tareas.indexOf(n);if(i>=0){tareas.splice(i,1);(SUB[n]||[]).forEach(function(x){var j=tareas.indexOf(x);if(j>=0)tareas.splice(j,1)})}else tareas.push(n);chips()})});
+  var st=$("subtar");st.innerHTML="";
+  Object.keys(SUB).forEach(function(k){if(tareas.indexOf(k)<0)return;var h=document.createElement("h3");h.textContent=k;st.appendChild(h);var c=document.createElement("div");c.className="chips";st.appendChild(c);SUB[k].forEach(function(n){chipBtn(n,c,function(){var i=tareas.indexOf(n);if(i>=0)tareas.splice(i,1);else tareas.push(n);chips()})})});
+  [3,5].forEach(function(n){var pb=$("prom"+n);if(pb)pb.className="chip"+(promo==n?" on":"")});
+  [["natn",natN,function(x){natN=x}],["natp",natP,function(x){natP=x}]].forEach(function(g){var c=$(g[0]);if(!c)return;c.innerHTML="";NIV.forEach(function(n){var b=document.createElement("button");b.type="button";b.className="chip"+(g[1]==n?" on":"");b.textContent=n;b.onclick=function(){g[2](g[1]==n?"":n);chips()};c.appendChild(b)})});
+  detalle();
+}
+function tarTxt(v){var ts=v.tareas||[];return ts.filter(function(x){return!esSub(x)}).map(function(x){var sb=(SUB[x]||[]).filter(function(y){return ts.indexOf(y)>=0});return x+(sb.length?" ("+sb.join(", ")+")":"")}).concat(ts.filter(function(x){return esSub(x)&&!Object.keys(SUB).some(function(k){return ts.indexOf(k)>=0&&SUB[k].indexOf(x)>=0})})).join(", ")}
+function detalle(){$("d-ali").hidden=tareas.indexOf("Alimentación")<0;$("d-cur").hidden=tareas.indexOf("Cura")<0;$("d-cos").hidden=tareas.indexOf("Cosecha")<0;$("d-tra").hidden=tareas.indexOf("Traslado")<0;$("d-mul").hidden=tareas.indexOf("Multiplicación")<0;$("d-var").hidden=tareas.indexOf("Monitoreo varroa")<0;curChips()}
+function curChips(){var c=$("cur");c.innerHTML="";PROD.forEach(function(n){var b=document.createElement("button");b.className="chip"+(cura.indexOf(n)>=0?" on":"");b.textContent=n;b.onclick=function(){var i=cura.indexOf(n);if(i>=0)cura.splice(i,1);else cura.push(n);curChips()};c.appendChild(b)})}
+$("col").oninput=function(){destinos();colShow()};$("c_s").oninput=kgShow;$("c_m").oninput=kgShow;$("c_p").oninput=kgShow;Array.prototype.forEach.call(document.querySelectorAll("#pchips .chip"),function(b){b.onclick=function(){$("c_p").value=b.getAttribute("data-p");kgShow()}});$("dest").onchange=function(){$("dest2").hidden=$("dest").value!="__otro"};
+$("fec").value=hoy();estacion=estDe(hoy());chips();
+$("fec").onchange=function(){if($("fec").value)estacion=estDe($("fec").value)};
+
+function destinos(){var cur=$("col").value.trim().toLowerCase(),s=$("dest"),p=s.value,l={};visitas.forEach(function(v){if(v.colmenar.toLowerCase()!=cur)l[v.colmenar]=1});s.innerHTML='<option value="">Andá al destino…</option>'+Object.keys(l).sort().map(function(n){return'<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join("")+'<option value="__otro">Otro / nuevo…</option>';s.value=p;if(s.selectedIndex<0)s.value="";$("dest2").hidden=s.value!="__otro"}
+function kgEst(s,m,p){p=(p==null?100:p)/100;return[Math.round((s*19+m*11)*p),Math.round((s*25+m*13)*p)]}
+function kgShow(){var r=kgEst(num("c_s"),num("c_m"),num("c_p")||100);$("kgest").textContent=r[1]?"Estimado: "+r[0]+" a "+r[1]+" kg":""}
+function kgTxt(c){return c.kmax?c.kmin+"–"+c.kmax:"—"}
+function kgCol(c){return(c.kmax&&c.col)?(c.kmin/c.col).toFixed(1)+"–"+(c.kmax/c.col).toFixed(1):"—"}
+function destVal(){var s=$("dest").value;return s=="__otro"?$("dest2").value.trim():s}
+function nombres(){lotesList();var s={};visitas.forEach(function(v){s[v.colmenar]=1;if(v.tras_col&&v.destino&&!Object.keys(s).some(function(n){return n.toLowerCase()==v.destino.trim().toLowerCase()}))s[v.destino.trim()]=1});var d=$("cols");d.innerHTML="";Object.keys(s).sort().forEach(function(n){var o=document.createElement("option");o.value=n;d.appendChild(o)});destinos()}
+
+function lsLeer(){try{return JSON.parse(localStorage.getItem(LS)||"[]")}catch(e){return[]}}
+function lsGuardar(){try{localStorage.setItem(LS,JSON.stringify(visitas))}catch(e){}}
+
+function ordenar(){visitas.sort(function(a,b){return a.fecha<b.fecha?1:a.fecha>b.fecha?-1:(b.creado||0)-(a.creado||0)})}
+
+var vedit=null,vmues=[],UMB=3;
+function campDe(f){var y=+f.slice(0,4),m=+f.slice(5,7);return m>=5?y:y-1}
+function sv(i,x){$(i).value=x?x:""}
+function vpTxt(m){return m.a>0?((m.v||0)/m.a*100).toFixed(1)+"%":""}
+function vPct(a){var ok=(a||[]).filter(function(m){return m.a>0});if(!ok.length)return null;var t=0;ok.forEach(function(m){t+=(m.v||0)/m.a*100});return Math.round(t/ok.length*10)/10}
+function vRows(){
+  var R=$("vrows");
+  R.innerHTML=vmues.map(function(m,i){return'<div class="row" style="align-items:flex-end"><div><label>Muestra '+(i+1)+': abejas</label><input data-i="'+i+'" data-k="a" type="number" inputmode="numeric" min="0" value="'+(m.a||"")+'"></div><div><label>Varroas</label><input data-i="'+i+'" data-k="v" type="number" inputmode="numeric" min="0" value="'+(m.v||"")+'"></div><div class="mut" style="flex:.5;padding-bottom:12px" id="vp'+i+'">'+vpTxt(m)+"</div></div>"}).join("");
+  Array.prototype.forEach.call(R.querySelectorAll("input"),function(e){e.oninput=function(){var i=e.getAttribute("data-i"),m=vmues[+i];m[e.getAttribute("data-k")]=parseInt(e.value,10)||0;$("vp"+i).textContent=vpTxt(m);vRes()}});
+  vRes();
+}
+function vRes(){var p=vPct(vmues);$("vres").innerHTML=p==null?"":"Infestación promedio: "+p.toFixed(1)+"%"+(p>=UMB?' <span style="color:var(--bad)">· sobre el umbral de '+UMB+"%</span>":"")}
+function despues(x,y){return x.fecha>y.fecha||(x.fecha==y.fecha&&(x.creado||0)>(y.creado||0))}
+function colAct(nombre,f,excl){var c=String(nombre||"").trim().toLowerCase(),b=null,inc=[];
+  visitas.forEach(function(v){if(v.id==excl||!v.colmenas||v.colmenar.trim().toLowerCase()!=c||v.fecha>f)return;if(!b||despues(v,b))b=v});
+  visitas.forEach(function(v){if(v.id==excl||!v.tras_col||String(v.destino||"").trim().toLowerCase()!=c||v.fecha>f)return;if(!b||despues(v,b))inc.push({from:v.colmenar,n:v.tras_col})});
+  var t=0;inc.forEach(function(x){t+=x.n});return{prev:b,inc:inc,traidas:t,base:b?b.colmenas+t:(inc.length?t:null)}}
+function prevCol(){return colAct($("col").value,$("fec").value||hoy(),vedit).prev}
+function nBajas(){return num("b_mu")+num("b_za")+num("b_hu")+num("b_lo")+num("b_cy")+num("b_ot")}
+function bTot(b){b=b||{};return(b.muertas||0)+(b.zanganeras||0)+(b.huerfanas||0)+(b.loque||0)+(b.yeso||0)+(b.otra||0)}
+function colSug(){var r=colAct($("col").value,$("fec").value||hoy(),vedit);if(r.base==null)return null;return Math.max(0,r.base+num("al_nu")+num("al_en")+num("al_in")-nBajas()-(tareas.indexOf("Traslado")>=0?num("trac"):0))}
+function colShow(){var r=colAct($("col").value,$("fec").value||hoy(),vedit),s=colSug(),c=num("colm");
+  if(r.base!=null){var desde=r.prev?r.prev.colmenas:r.base,txt=[];if(r.prev)txt.push("Según la visita del "+fmt(r.prev.fecha));r.inc.forEach(function(x){txt.push("+"+x.n+" traídas de "+x.from)});if(s!==r.base)txt.push("con las altas y bajas de hoy");
+    $("coltot").textContent="En el colmenar: "+(s!==desde?desde+" → "+s:s)+" colmenas";$("colprev").textContent=txt.join(", ");$("colml").textContent="Corregir total (solo si no coincide)";$("colm").placeholder=String(s)}
+  else{$("coltot").textContent="";$("colprev").textContent="";$("colml").textContent="Colmenas en el colmenar";$("colm").placeholder="Cantidad de colmenas"}
+  var tot=c||s||0,cs=num("cat1")+num("cat2")+num("cat3");$("catsum").textContent=cs?"Categorizadas: "+cs+(tot?" de "+tot+" colmenas":""):""}
+function loteNext(){var o=campDe($("fec").value||hoy()),mx=0;visitas.forEach(function(v){if(v.id!=vedit&&v.lote&&campDe(v.fecha)==o){var n=parseInt(v.lote,10);if(n>mx)mx=n}});return mx+1}
+function loteShow(){$("c_lote").placeholder="Se asigna solo: "+loteNext()}
+function lotesList(){var o=+$("tcamp").value||campHoy(),d=$("lotes");if(!d)return;d.innerHTML="";visitas.filter(function(v){return v.lote&&campDe(v.fecha)==o}).forEach(function(v){var e=document.createElement("option");e.value=v.lote;e.textContent=v.colmenar+" · "+fmt(v.fecha);d.appendChild(e)})}
+var VIN=["colm","q_m","q_s","a_m","a_s","a_n","a_c","c_m","c_s","c_p","c_lote","obs","jar","tor","curd","curl","trac","tran","muln","mulc","mulcr","mulrf","mulrv","dest2","b_mu","b_za","b_hu","b_lo","b_cy","b_ot","al_nu","al_en","al_in","trae","cat1","cat2","cat3"];
+function vReset(){
+  VIN.forEach(function(i){$(i).value=""});$("dest").value="";$("dest2").hidden=true;cura=[];tareas=[];promo=0;natN="";natP="";vmues=[{a:0,v:0},{a:0,v:0},{a:0,v:0}];vedit=null;
+  $("vform").hidden=true;$("vcancel").hidden=true;$("guardar").textContent="Guardar visita";$("d-ab").open=false;$("d-cat").open=false;
+  chips();vRows();kgShow();colShow();loteShow();
+}
+function guardar(){
+  var col=$("col").value.trim(),f=$("fec").value,m=$("msg");m.className="msg";
+  if(!col||!f){m.className="msg err";m.textContent="Falta el colmenar o la fecha";return}
+  var T=function(t){return tareas.indexOf(t)>=0},cs=T("Cosecha"),hayCos=cs&&(num("c_m")||num("c_s")),sug=colSug();
+  var old=vedit?visitas.filter(function(x){return x.id==vedit})[0]:null;
+  var v={id:vedit||"v"+Date.now(),creado:old&&old.creado||Date.now(),colmenar:col,fecha:f,estacion:estDe(f),tareas:tareas.slice(),
+    colmenas:$("colm").value.trim()===""?(sug||0):num("colm"),
+    bajas:{muertas:num("b_mu"),zanganeras:num("b_za"),huerfanas:num("b_hu"),loque:num("b_lo"),yeso:num("b_cy"),otra:num("b_ot")},altas_nuc:num("al_nu"),altas_enj:num("al_en"),altas_ing:num("al_in"),cat1:num("cat1"),cat2:num("cat2"),cat3:num("cat3"),
+    quedan_m:num("q_m"),quedan_s:num("q_s"),apilado_m:num("a_m"),apilado_s:num("a_s"),apilado_n:num("a_n"),apilado_c:num("a_c"),
+    cosecha_m:cs?num("c_m"):0,cosecha_s:cs?num("c_s"):0,cosecha_p:cs?(num("c_p")||100):100,lote:cs?($("c_lote").value.trim()||(hayCos?String(loteNext()):"")):"",
+    obs:$("obs").value.trim(),jarabe:T("Alimentación")?numf("jar"):0,promotor:T("Alimentación")&&promo>0,promotor_ml:T("Alimentación")?promo:0,nectar:T("Alimentación")?natN:"",polen:T("Alimentación")?natP:"",torta:T("Alimentación")?numf("tor"):0,
+    cura:T("Cura")?cura.slice():[],cura_det:T("Cura")?$("curd").value.trim():"",cura_lote:T("Cura")?$("curl").value.trim():"",
+    varroa:T("Monitoreo varroa")?vmues.filter(function(x){return x.a>0}).map(function(x){return{a:x.a,v:x.v||0}}):[],varroa_pct:T("Monitoreo varroa")?vPct(vmues):null,
+    destino:T("Traslado")?destVal():"",tras_col:T("Traslado")?num("trac"):0,tras_nuc:T("Traslado")?num("tran"):0,tras_enj:T("Traslado")?num("trae"):0,
+    mult_nuc:T("Multiplicación")?num("muln"):0,mult_can:T("Multiplicación")?num("mulc"):0,mult_cel:T("Multiplicación")?num("mulcr"):0,mult_rf:T("Multiplicación")?num("mulrf"):0,mult_rv:T("Multiplicación")?num("mulrv"):0};
+  var fin=function(ok){
+    if(!ok){m.className="msg err";m.textContent="No se pudo guardar. Probá de nuevo.";return}
+    m.textContent=(old?"✓ Visita actualizada":"✓ Visita guardada")+(v.lote?" · lote de extracción "+v.lote:"");
+        vReset();
+  };
+  escribir("visitas",v.id,v);fin(true);
+}
+function cargar(id){
+  var v=visitas.filter(function(x){return x.id==id})[0];if(!v)return;
+  vedit=id;tab("n");$("col").value=v.colmenar;$("fec").value=v.fecha;estacion=v.estacion||estDe(v.fecha);tareas=(v.tareas||[]).slice();Object.keys(SUB).forEach(function(k){if(tareas.indexOf(k)<0&&SUB[k].some(function(x){return tareas.indexOf(x)>=0}))tareas.push(k)});promo=v.promotor_ml||(v.promotor?3:0);natN=v.nectar||"";natP=v.polen||"";cura=(v.cura||[]).slice();
+  var b=v.bajas||{};
+  [["colm",v.colmenas],["q_m",v.quedan_m],["q_s",v.quedan_s],["a_m",v.apilado_m],["a_s",v.apilado_s],["a_n",v.apilado_n],["a_c",v.apilado_c],["c_m",v.cosecha_m],["c_s",v.cosecha_s],["c_p",v.cosecha_p&&v.cosecha_p<100?v.cosecha_p:0],["c_lote",v.lote],["obs",v.obs],["jar",v.jarabe],["tor",v.torta],["curd",v.cura_det],["curl",v.cura_lote],["trac",v.tras_col],["tran",v.tras_nuc],["muln",v.mult_nuc],["mulc",v.mult_can],["mulcr",v.mult_cel],["mulrf",v.mult_rf],["mulrv",v.mult_rv],["b_mu",b.muertas],["b_za",b.zanganeras],["b_hu",b.huerfanas],["b_lo",b.loque],["b_cy",b.yeso],["b_ot",b.otra],["al_nu",v.altas_nuc],["al_en",v.altas_enj],["al_in",v.altas_ing],["trae",v.tras_enj],["cat1",v.cat1],["cat2",v.cat2],["cat3",v.cat3]].forEach(function(x){sv(x[0],x[1])});
+  destinos();if(v.destino){$("dest").value=v.destino;if($("dest").selectedIndex<0||$("dest").value!=v.destino){$("dest").value="__otro";$("dest2").value=v.destino}}$("dest2").hidden=$("dest").value!="__otro";
+  vmues=v.varroa&&v.varroa.length?v.varroa.map(function(x){return{a:x.a,v:x.v}}):[{a:0,v:0},{a:0,v:0},{a:0,v:0}];
+  $("d-ab").open=bTot(b)+(v.altas_nuc||0)+(v.altas_enj||0)+(v.altas_ing||0)>0;$("d-cat").open=(v.cat1||0)+(v.cat2||0)+(v.cat3||0)>0;
+  $("vform").hidden=false;$("vform").textContent="Editando visita: "+v.colmenar+" · "+fmt(v.fecha);$("vcancel").hidden=false;$("guardar").textContent="Guardar cambios";$("msg").textContent="";
+  chips();vRows();kgShow();colShow();loteShow();window.scrollTo(0,0);
+}
+function vInit(){
+  vmues=[{a:0,v:0},{a:0,v:0},{a:0,v:0}];vRows();
+  [3,5].forEach(function(n){$("prom"+n).onclick=function(){promo=promo==n?0:n;chips()}});
+  $("vadd").onclick=function(){vmues.push({a:0,v:0});vRows()};
+  $("vcancel").onclick=function(){vReset();$("msg").textContent=""};
+  ["b_mu","b_za","b_hu","b_lo","b_cy","b_ot","al_nu","al_en","al_in","trac","colm","cat1","cat2","cat3"].forEach(function(i){$(i).addEventListener("input",colShow)});
+  $("fec").addEventListener("change",function(){colShow();loteShow()});
+  colShow();loteShow();
+}
+$("guardar").onclick=guardar;
+
+function borrar(id){
+  if(!confirm("¿Borrar esta visita?"))return;
+  escribir("visitas",id,null);
+  if(vedit==id)vReset();
+}
+
+
+function lista(){
+  var q=$("filtro").value.trim().toLowerCase(),L=$("lista");
+  var vs=visitas.filter(function(v){return!q||v.colmenar.toLowerCase().indexOf(q)>=0});
+  if(!vs.length){L.innerHTML='<span class="mut">Todavía no hay visitas cargadas.</span>';return}
+  L.innerHTML=vs.slice(0,100).map(function(v){
+    var d=[],b=v.bajas||{},bt=bTot(b);
+    if(v.colmenas)d.push("Colmenas "+v.colmenas);
+    if(bt){var bd=[];[["muertas","muertas"],["zanganeras","zanganeras"],["huerfanas","huérfanas"],["loque","loque"],["yeso","cría yesificada"],["otra","otra causa"]].forEach(function(x){if(b[x[0]])bd.push(b[x[0]]+" "+x[1])});d.push("Bajas "+bt+" ("+bd.join(", ")+")")}
+    if(v.altas_nuc||v.altas_enj||v.altas_ing){var ad=[];if(v.altas_nuc)ad.push(v.altas_nuc+" núcleos pasados a cámara");if(v.altas_enj)ad.push(v.altas_enj+" enjambres pasados a cámara");if(v.altas_ing)ad.push(v.altas_ing+" ingresadas");d.push("Altas: "+ad.join(" · "))}
+    if(v.cat1||v.cat2||v.cat3)d.push("Categoría I "+(v.cat1||0)+" · II "+(v.cat2||0)+" · III "+(v.cat3||0));
+    if(v.varroa_pct!=null)d.push("Varroa "+v.varroa_pct.toFixed(1)+"% ("+(v.varroa||[]).length+" muestras)");
+    if(v.quedan_m||v.quedan_s)d.push("Alzas melarias: 1/2 "+v.quedan_m+" · Alza "+v.quedan_s);
+    if(v.apilado_m||v.apilado_s||v.apilado_n||v.apilado_c)d.push("Material: nucleros "+(v.apilado_n||0)+" · cámaras "+(v.apilado_c||0)+" · 1/2 "+v.apilado_m+" · alzas "+v.apilado_s);
+    if(v.cosecha_m||v.cosecha_s){var r=kgEst(v.cosecha_s||0,v.cosecha_m||0,v.cosecha_p);d.push("Cosecha: 1/2 "+v.cosecha_m+" · Alza "+v.cosecha_s+(v.cosecha_p&&v.cosecha_p<100?" al "+v.cosecha_p+"%":"")+" (≈ "+r[0]+"–"+r[1]+" kg)"+(v.lote?" · lote "+v.lote:""))}
+    if(v.jarabe)d.push("Jarabe "+String(v.jarabe).replace(".",",")+" L"+(v.promotor_ml?" con promotor "+v.promotor_ml+" ml/L ("+String(Math.round(v.jarabe*v.promotor_ml*10)/10).replace(".",",")+" ml)":(v.promotor?" con promotor":"")));if(v.torta)d.push("Torta "+v.torta+" kg");if(v.nectar||v.polen)d.push("Natural: "+[v.nectar?"néctar "+v.nectar.toLowerCase():"",v.polen?"polen "+v.polen.toLowerCase():""].filter(Boolean).join(" · "));
+    if((v.cura&&v.cura.length)||v.cura_det||v.cura_lote)d.push("Cura: "+(v.cura||[]).join(", ")+(v.cura_det?" ("+v.cura_det+")":"")+(v.cura_lote?" · lote "+v.cura_lote:""));
+    if(v.destino||v.tras_col||v.tras_nuc||v.tras_enj)d.push("Traslado"+(v.destino?" a "+v.destino:"")+": colmenas "+(v.tras_col||0)+" · núcleos "+(v.tras_nuc||0)+(v.tras_enj?" · enjambres "+v.tras_enj:""));
+    if(v.mult_nuc||v.mult_can||v.mult_cel||v.mult_rf||v.mult_rv){var md=["núcleos "+(v.mult_nuc||0),"canasto técnico "+(v.mult_can||0)];if(v.mult_cel)md.push("celdas reales "+v.mult_cel);if(v.mult_rf)md.push("reinas fecundadas "+v.mult_rf);if(v.mult_rv)md.push("reinas vírgenes "+v.mult_rv);d.push("Multiplicación: "+md.join(" · "))}
+    return '<div class="v"><button class="del" data-id="'+esc(v.id)+'">Borrar</button><button class="ed" data-id="'+esc(v.id)+'">Editar</button><b>'+esc(v.colmenar)+" · "+fmt(v.fecha)+'</b><span class="mut">'+esc(v.estacion)+(v.tareas&&v.tareas.length?" · "+esc(tarTxt(v)):"")+"</span>"+(d.length?"<div>"+esc(d.join(" | "))+"</div>":"")+(v.obs?'<div class="mut">'+esc(v.obs)+"</div>":"")+"</div>"
+  }).join("");
+  Array.prototype.forEach.call(L.querySelectorAll(".del"),function(b){b.onclick=function(){borrar(b.getAttribute("data-id"))}});
+  Array.prototype.forEach.call(L.querySelectorAll(".ed"),function(b){b.onclick=function(){cargar(b.getAttribute("data-id"))}});
+}
+$("filtro").oninput=lista;
+
+function dias(f){return Math.max(0,Math.round((new Date(hoy())-new Date(f))/864e5))}
+
+function dias(f){return Math.max(0,Math.round((new Date(hoy())-new Date(f))/864e5))}
+var rOpen={};
+function nf(x){return(Math.round(x*10)/10).toLocaleString("es-AR")}
+function kv(rows){rows=rows.filter(function(r){return r&&r[1]!==""&&r[1]!=null});if(!rows.length)return"";return'<div class="kv">'+rows.map(function(r){return"<span>"+esc(r[0])+"</span><em"+(r[2]?' class="'+r[2]+'"':"")+">"+esc(r[1])+"</em>"}).join("")+"</div>"}
+function blk(t,html){return html?'<div class="blk"><h4>'+esc(t)+"</h4>"+html+"</div>":""}
+function hace(f){var d=dias(f);return d==0?"hoy":d==1?"ayer":"hace "+d+" d"}
+function resumen(){
+  var oc=campHoy(),names={};
+  visitas.forEach(function(v){var n=v.colmenar.trim();if(!names[n.toLowerCase()])names[n.toLowerCase()]=n;var d=String(v.destino||"").trim();if(v.tras_col&&d&&!names[d.toLowerCase()])names[d.toLowerCase()]=d});
+  var sAll=function(a,b){return despues(a,b)?-1:1};
+  var R=Object.keys(names).map(function(ln){
+    var n=names[ln],vs=visitas.filter(function(v){return v.colmenar.trim().toLowerCase()==ln}).sort(sAll),vc=vs.filter(function(v){return campDe(v.fecha)==oc});
+    var x={n:n,ln:ln,vs:vs,vc:vc,ult:vs[0]||null,col:colAct(n,"9999-12-31",null).base||0};
+    x.inc=visitas.filter(function(v){return v.tras_col&&String(v.destino||"").trim().toLowerCase()==ln&&campDe(v.fecha)==oc});
+    x.out=vc.filter(function(v){return v.tras_col});
+    var B={muertas:0,zanganeras:0,huerfanas:0,loque:0,yeso:0,otra:0},A={nuc:0,enj:0,ing:0},F={jar:0,prom:0,tor:0,n:0,ult:""},M={nuc:0,can:0,cel:0,rf:0,rv:0},C={s:0,m:0,kmin:0,kmax:0,lotes:[]};
+    vc.forEach(function(v){var b=v.bajas||{};Object.keys(B).forEach(function(k){B[k]+=b[k]||0});A.nuc+=v.altas_nuc||0;A.enj+=v.altas_enj||0;A.ing+=v.altas_ing||0;
+      if(v.jarabe||v.torta){F.jar+=v.jarabe||0;F.prom+=(v.jarabe||0)*(v.promotor_ml||0);F.tor+=v.torta||0;F.n++;if(v.fecha>F.ult)F.ult=v.fecha}
+      M.nuc+=v.mult_nuc||0;M.can+=v.mult_can||0;M.cel+=v.mult_cel||0;M.rf+=v.mult_rf||0;M.rv+=v.mult_rv||0;
+      if(v.cosecha_s||v.cosecha_m){C.s+=v.cosecha_s||0;C.m+=v.cosecha_m||0;var k=kgEst(v.cosecha_s||0,v.cosecha_m||0,v.cosecha_p);C.kmin+=k[0];C.kmax+=k[1];if(v.lote)C.lotes.push(v.lote)}});
+    x.B=B;x.bt=bTot(B);x.A=A;x.at=A.nuc+A.enj+A.ing;x.F=F;x.M=M;x.C=C;
+    x.it=0;x.inc.forEach(function(v){x.it+=v.tras_col});x.ot=0;x.out.forEach(function(v){x.ot+=v.tras_col});
+    x.ini=x.col-x.at-x.it+x.bt+x.ot;
+    x.cat=vs.filter(function(v){return(v.cat1||0)+(v.cat2||0)+(v.cat3||0)>0})[0]||null;
+    x.cura=vs.filter(function(v){return(v.tareas||[]).indexOf("Cura")>=0})[0]||null;x.ncura=vc.filter(function(v){return(v.tareas||[]).indexOf("Cura")>=0}).length;
+    x.var=vs.filter(function(v){return v.varroa_pct!=null});
+    x.mat=vs.filter(function(v){return v.apilado_n||v.apilado_c||v.apilado_m||v.apilado_s||v.quedan_m||v.quedan_s})[0]||null;
+    x.mant={};["Corte de pasto","Reparación de alambre","Aplicación de herbicida"].forEach(function(t){var w=vs.filter(function(v){return(v.tareas||[]).indexOf(t)>=0})[0];if(w)x.mant[t]=w.fecha});
+    x.obs=vs.filter(function(v){return v.obs}).slice(0,3);x.nat=vs.filter(function(v){return v.nectar||v.polen})[0]||null;
+    var tp=tPropios(oc).filter(function(t){return String(t.colmenar||"").trim().toLowerCase()==ln});x.tn=tp.length;x.tkg=0;x.tpend=0;tp.forEach(function(t){x.tkg+=tEst(t);if(!t.neto)x.tpend++});
+    return x});
+  R.sort(function(a,b){var fa=a.ult?a.ult.fecha:"",fb=b.ult?b.ult.fecha:"";return fa<fb?1:fa>fb?-1:a.n.localeCompare(b.n)});
+  var tc=0;R.forEach(function(x){tc+=x.col});
+  $("k1").textContent=visitas.length;$("k2").textContent=R.length;$("k3").textContent=tc;
+  if(!R.length){$("resumen").innerHTML='<div class="card"><span class="mut">Cargá visitas para ver el resumen.</span></div>';return}
+  $("resumen").innerHTML='<div class="mut" style="margin:0 2px 6px">Tocá un colmenar para ver todo. Bajas, altas y cosecha: campaña '+campNom(oc)+".</div>"+R.map(function(x){
+    var tags=[];
+    var lv=x.var[0];if(lv)tags.push('<span class="tag'+(lv.varroa_pct>=UMB?" bad":"")+'">Varroa '+nf(lv.varroa_pct)+"%</span>");
+    if(x.bt)tags.push('<span class="tag bad">−'+x.bt+" bajas</span>");
+    if(x.at+x.it)tags.push('<span class="tag">+'+(x.at+x.it)+" altas</span>");
+    if(x.cura)tags.push('<span class="tag">Cura '+hace(x.cura.fecha)+"</span>");
+    if(x.C.kmax)tags.push('<span class="tag">≈ '+fmtN((x.C.kmin+x.C.kmax)/2)+" kg</span>");
+    var sum='<summary><div class="rs-h"><div class="rs-n"><b>'+esc(x.n)+'</b><span class="mut">'+(x.ult?"Última visita "+fmt(x.ult.fecha)+" · "+hace(x.ult.fecha):"Sin visitas (llegaron por traslado)")+'</span></div><div class="rs-c"><b>'+x.col+'</b><span class="mut">colmenas</span></div></div>'+(tags.length?'<div class="tags">'+tags.join("")+"</div>":"")+"</summary>";
+    var bd=[];["muertas","zanganeras","huerfanas","loque","yeso","otra"].forEach(function(k,i){if(x.B[k])bd.push([["Muertas","Zanganeras","Huérfanas","Loque (LA/LE)","Cría yesificada","Otra causa"][i],"−"+x.B[k],"neg"])});
+    var colH=kv([["Al inicio de la campaña (calculado)",x.ini]].concat(x.A.nuc?[["Núcleos pasados a cámara","+"+x.A.nuc,"pos"]]:[],x.A.enj?[["Enjambres pasados a cámara","+"+x.A.enj,"pos"]]:[],x.A.ing?[["Compradas","+"+x.A.ing,"pos"]]:[],
+      x.inc.map(function(v){return["Traídas de "+v.colmenar+" ("+fmt(v.fecha)+")","+"+v.tras_col,"pos"]}),x.out.map(function(v){return["Llevadas a "+(v.destino||"?")+" ("+fmt(v.fecha)+")","−"+v.tras_col,"neg"]}),bd,
+      [["Hoy en el colmenar",x.col,"tot"]],x.bt&&x.ini>0?[["Pérdidas sobre el inicio",nf(x.bt/x.ini*100)+"%"]]:[]));
+    var cat=x.cat?(function(c){var t=(c.cat1||0)+(c.cat2||0)+(c.cat3||0),p=function(n){return n+" ("+Math.round(n/t*100)+"%)"};return kv([["I · Fuertes",p(c.cat1||0)],["II · Medias",p(c.cat2||0)],["III · Débiles",p(c.cat3||0)],["Categorizadas el "+fmt(c.fecha),t+(x.col?" de "+x.col:"")]])})(x.cat):"";
+    var san=kv([x.cura?["Última cura",fmt(x.cura.fecha)+" · "+hace(x.cura.fecha)]:null,x.cura&&(x.cura.cura||[]).length?["Producto",(x.cura.cura||[]).join(", ")]:null,x.cura&&x.cura.cura_det?["Dosis / método",x.cura.cura_det]:null,x.cura&&x.cura.cura_lote?["Lote o proveedor",x.cura.cura_lote]:null,x.ncura?["Curas en la campaña",x.ncura]:null]
+      .concat(x.var.slice(0,4).map(function(v,i){return[(i?"Varroa ":"Último monitoreo varroa ")+fmt(v.fecha),nf(v.varroa_pct)+"% ("+(v.varroa||[]).length+" muestras)",v.varroa_pct>=UMB?"neg":""]})));
+    var ali=kv([x.F.n?["Alimentaciones",x.F.n+" · última "+fmt(x.F.ult)]:null,x.F.jar?["Jarabe",nf(x.F.jar)+" L"]:null,x.F.prom?["Promotor",nf(x.F.prom)+" ml"]:null,x.F.tor?["Torta",nf(x.F.tor)+" kg"]:null,x.col&&x.F.jar?["Jarabe por colmena",nf(x.F.jar/x.col)+" L"]:null,x.nat&&x.nat.nectar?["Néctar ("+fmt(x.nat.fecha)+")",x.nat.nectar]:null,x.nat&&x.nat.polen?["Polen ("+fmt(x.nat.fecha)+")",x.nat.polen]:null]);
+    var mul=(x.M.nuc+x.M.can+x.M.cel+x.M.rf+x.M.rv)?kv([["Núcleos armados",x.M.nuc||""],["Canasto técnico",x.M.can||""],["Celdas reales",x.M.cel||""],["Reinas fecundadas",x.M.rf||""],["Reinas vírgenes",x.M.rv||""],(x.A.nuc?["Núcleos ya pasados a cámara",x.A.nuc]:null)]):"";
+    var cos=(x.C.kmax||x.tn)?kv([x.C.s?["Alzas cosechadas",x.C.s]:null,x.C.m?["Medias alzas cosechadas",x.C.m]:null,x.C.kmax?["Estimado por alzas",fmtN(x.C.kmin)+"–"+fmtN(x.C.kmax)+" kg"]:null,x.C.kmax&&x.col?["Estimado por colmena",nf(x.C.kmin/x.col)+"–"+nf(x.C.kmax/x.col)+" kg"]:null,x.C.lotes.length?["Lotes de extracción",x.C.lotes.join(", ")]:null,x.tn?["Tambores (reales)",x.tn+" · "+(x.tpend?"≈ ":"")+fmtN(x.tkg)+" kg"]:null,x.tn&&x.col?["Kg reales por colmena",nf(x.tkg/x.col),"tot"]:null]):"";
+    var m=x.mat,mat=m?kv([["Alzas melarias puestas",(m.quedan_s||0)+" alzas · "+(m.quedan_m||0)+" medias"],["Nucleros",m.apilado_n||0],["Cámaras de cría",m.apilado_c||0],["Medias alzas",m.apilado_m||0],["Alzas",m.apilado_s||0],["Según la visita del",fmt(m.fecha)]]):"";
+    var man=Object.keys(x.mant).length?kv(Object.keys(x.mant).map(function(t){return[t,fmt(x.mant[t])+" · "+hace(x.mant[t])]})):"";
+    var obs=x.obs.length?x.obs.map(function(v){return'<p class="ob"><span class="mut">'+fmt(v.fecha)+"</span> "+esc(v.obs)+"</p>"}).join(""):"";
+    var body=blk("Colmenas",colH)+blk("Categoría",cat)+blk("Sanidad",san)+blk("Alimentación",ali)+blk("Multiplicación (campaña)",mul)+blk("Cosecha (campaña)",cos)+blk("Material en el colmenar",mat)+blk("Mantenimiento",man)+blk("Observaciones",obs)
+      +'<div class="mut" style="margin-top:8px">'+x.vc.length+" visitas en la campaña · "+x.vs.length+' en total</div><button type="button" class="sec rs-hist" data-n="'+esc(x.n)+'">Ver sus visitas en el Historial</button>';
+    return'<details class="card rs" data-k="'+esc(x.ln)+'"'+(rOpen[x.ln]?" open":"")+">"+sum+'<div class="rs-b">'+body+"</div></details>"}).join("");
+  Array.prototype.forEach.call($("resumen").querySelectorAll("details.rs"),function(d){d.ontoggle=function(){rOpen[d.getAttribute("data-k")]=d.open}});
+  Array.prototype.forEach.call($("resumen").querySelectorAll(".rs-hist"),function(b){b.onclick=function(){$("filtro").value=b.getAttribute("data-n");tab("h");window.scrollTo(0,0)}});
+}
+function campanias(){
+  var C=$("camp"),G=$("campg");
+  if(!camps.length){C.innerHTML='<span class="mut">Todavía no hay campañas cargadas.</span>';G.innerHTML="";return}
+  var rows=camps.slice().sort(function(a,b){return b.orden-a.orden}),bars=[];
+  C.innerHTML="<table><tr><th>Campaña</th><th>Colmenas</th><th>Miel kg</th><th>Tambores</th><th>Kg/colmena</th></tr>"+rows.map(function(c){
+    var cur=c.kg==null,kg="—",kc="—",tb=c.tambores!=null?(Number.isInteger(+c.tambores)?String(c.tambores):(+c.tambores).toFixed(1)):"—",val=null;
+    if(!cur){kg=c.kg;if(c.colmenas){val=c.kg/c.colmenas;kc=val.toFixed(1)}}
+    else if(tPropios(c.orden).length){var tp=tPropios(c.orden),r=tKg(tp);kg=(r.pend?"≈ ":"")+fmtN(r.kg);tb=String(tp.length);if(c.colmenas){val=r.kg/c.colmenas;kc=val.toFixed(1)}}
+    else{var a=c.orden+"-05-01",b=(c.orden+1)+"-05-01",lo=0,hi=0;visitas.forEach(function(v){if(v.fecha>=a&&v.fecha<b){var r=kgEst(v.cosecha_s||0,v.cosecha_m||0,v.cosecha_p);lo+=r[0];hi+=r[1]}});if(hi){kg="≈ "+lo+"–"+hi;if(c.colmenas){kc=(lo/c.colmenas).toFixed(1)+"–"+(hi/c.colmenas).toFixed(1);val=(lo+hi)/2/c.colmenas}}}
+    var nom=c.campana+(cur?" (en curso)":"");
+    if(val!=null)bars.push({n:nom,v:val});
+    return"<tr><td>"+esc(nom)+"</td><td>"+(c.colmenas||"—")+"</td><td>"+kg+"</td><td>"+tb+"</td><td>"+kc+"</td></tr>"}).join("")+"</table>";
+  bars.reverse();
+  var mx=Math.max.apply(null,bars.map(function(b){return b.v}).concat([1]));
+  G.innerHTML="<b>Kg de miel por colmena</b>"+bars.map(function(b){return'<div style="margin-top:8px"><div class="mut">'+esc(b.n)+" · "+b.v.toFixed(1)+'</div><div style="height:14px;border-radius:7px;background:var(--ac);width:'+Math.round(b.v/mx*100)+'%"></div></div>'}).join("");
+}
+function leerSnap(snap){
+  visitas=snap.docs.map(function(d){var x=typeof d.data=="function"?d.data():d;if(!x.id&&d.id)x.id=d.id;return x});
+  ordenar();nombres();
+  if(!$("v-h").hidden)lista();if(!$("v-r").hidden)resumen();if(!$("v-c").hidden)campanias();
+}
+
+var tambores=[],ttipo="Alto",tprodSel="Propio",tedit=null,tAuto=true,TLS="tambores_v1",TD=["En sala","Cargado a Villamora","Envasado","Canje","Vendido","Otro"];
+function tLeer(){try{return JSON.parse(localStorage.getItem(TLS)||"[]")}catch(e){return[]}}
+function tLSG(){try{localStorage.setItem(TLS,JSON.stringify(tambores))}catch(e){}}
+function fmtN(x){return Math.round(x).toLocaleString("es-AR")}
+function campHoy(){return campDe(hoy())}
+function campNom(o){return String(o%100).padStart(2,"0")+"-"+String((o+1)%100).padStart(2,"0")}
+function tPropios(o){return tambores.filter(function(t){return t.campana==o&&t.productor=="Propio"})}
+function tEst(t){return t.neto?+t.neto:(t.tipo=="Petizo"?300:340)}
+function tKg(ts){var k=0,p=0;ts.forEach(function(t){k+=tEst(t);if(!t.neto)p++});return{kg:k,pend:p}}
+function campOpts(){var s={};s[campHoy()]=1;camps.forEach(function(c){s[c.orden]=1});tambores.forEach(function(t){s[t.campana]=1});var ks=Object.keys(s).map(Number).sort(function(a,b){return b-a});["tcamp","tfil"].forEach(function(id){var e=$(id),p=e.value;e.innerHTML=ks.map(function(o){return'<option value="'+o+'">'+campNom(o)+(o==campHoy()?" (en curso)":"")+"</option>"}).join("");e.value=p||String(campHoy());if(e.selectedIndex<0)e.value=String(campHoy())})}
+function tChips(){
+  var e=$("ttipo");e.innerHTML="";
+  [["Alto","Alto (340 kg)"],["Petizo","Petizo (300 kg)"]].forEach(function(x){var b=document.createElement("button");b.type="button";b.className="chip"+(x[0]==ttipo?" on":"");b.textContent=x[1];b.onclick=function(){ttipo=x[0];tChips()};e.appendChild(b)});
+  var p=$("tprod");p.innerHTML="";
+  [["Propio","Mío"],["Jero","Jero"],["Otro","Otro"]].forEach(function(x){var b=document.createElement("button");b.type="button";b.className="chip"+(x[0]==tprodSel?" on":"");b.textContent=x[1];b.onclick=function(){tprodSel=x[0];tChips()};p.appendChild(b)});
+  $("tprod2").hidden=tprodSel!="Otro";
+}
+function tSig(){var o=+$("tcamp").value,mx=0;tambores.forEach(function(t){if(t.campana==o&&+t.numero>mx)mx=+t.numero});return mx+1}
+function tWarn(){
+  var et=$("tet").value.trim().toLowerCase(),n=num("tnum"),o=+$("tcamp").value,w=[];
+  tambores.forEach(function(t){if(t.id==tedit)return;
+    if(et&&String(t.etiqueta||"").trim().toLowerCase()==et)w.push("La etiqueta "+t.etiqueta+" ya está cargada (N° "+t.numero+", campaña "+campNom(t.campana)+")");
+    if(n&&t.campana==o&&+t.numero==n)w.push("El N° "+n+" ya existe en la campaña "+campNom(o))});
+  $("tw").textContent=w.join(". ");return w.join(". ");
+}
+function tReset(){
+  ["tet","ttara","tbru","tnet","tcolor","tobs","tprod2"].forEach(function(i){$(i).value=""});
+  ttipo="Alto";tprodSel="Propio";$("tdest").value="En sala";tedit=null;tAuto=true;
+  $("tform").textContent="Nuevo tambor";$("tcancel").hidden=true;$("tguardar").textContent="Guardar tambor";
+  $("tnum").value=tSig();tChips();tWarn();
+}
+function tGuardar(){
+  var m=$("tmsg");m.className="msg";var n=num("tnum");
+  if(!n){m.className="msg err";m.textContent="Falta el N° de llenado";return}
+  var w=tWarn();if(w&&!confirm(w+".\n\n¿Guardar igual?"))return;
+  var bru=numf("tbru"),tara=numf("ttara"),net=numf("tnet");if(!net&&bru&&tara)net=Math.round((bru-tara)*10)/10;
+  var old=tedit?tambores.filter(function(t){return t.id==tedit})[0]:null;
+  var t={id:tedit||"t"+Date.now(),creado:old&&old.creado||Date.now(),campana:+$("tcamp").value,numero:n,etiqueta:$("tet").value.trim(),tipo:ttipo,tara:tara||null,colmenar:$("tcol").value.trim(),lote:$("tlote").value.trim(),productor:tprodSel=="Otro"?($("tprod2").value.trim()||"Otro"):tprodSel,destino:$("tdest").value,bruto:bru||null,neto:net>0?net:null,color:$("tcolor").value.trim(),obs:$("tobs").value.trim()};
+  var fin=function(ok){
+    if(!ok){m.className="msg err";m.textContent="No se pudo guardar. Probá de nuevo.";return}
+    m.textContent="✓ Tambor N° "+t.numero+(old?" actualizado":" guardado");
+        $("tfil").value=String(t.campana);tReset();tRefresh();
+  };
+  escribir("tambores",t.id,t);fin(true);
+}
+function tEditar(id){
+  var t=tambores.filter(function(x){return x.id==id})[0];if(!t)return;
+  tedit=id;tAuto=false;$("tcamp").value=String(t.campana);$("tnum").value=t.numero;$("tet").value=t.etiqueta||"";ttipo=t.tipo||"Alto";$("ttara").value=t.tara||"";$("tcol").value=t.colmenar||"";$("tlote").value=t.lote||"";
+  if(t.productor=="Propio"||t.productor=="Jero"){tprodSel=t.productor;$("tprod2").value=""}else{tprodSel="Otro";$("tprod2").value=t.productor||""}
+  $("tdest").value=TD.indexOf(t.destino)>=0?t.destino:"Otro";$("tbru").value=t.bruto||"";$("tnet").value=t.neto||"";$("tcolor").value=t.color||"";$("tobs").value=t.obs||"";
+  $("tform").textContent="Editar tambor N° "+t.numero;$("tcancel").hidden=false;$("tguardar").textContent="Guardar cambios";$("tmsg").textContent="";
+  tChips();tWarn();window.scrollTo(0,0);$("tform").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function tBorrar(id){
+  if(!confirm("¿Borrar este tambor?"))return;
+  escribir("tambores",id,null);
+  if(tedit==id)tReset();
+}
+function tLista(){
+  var o=+$("tfil").value,ts=tambores.filter(function(t){return t.campana==o}).sort(function(a,b){return b.numero-a.numero});
+  var own=ts.filter(function(t){return t.productor=="Propio"}),r=tKg(own),otros=ts.length-own.length;
+  $("tk1").textContent=own.length;$("tk2").textContent=(r.pend?"≈ ":"")+fmtN(r.kg);$("tk3").textContent=r.pend;
+  var L=$("tlista");
+  if(!ts.length){L.innerHTML='<span class="mut">Todavía no hay tambores en la campaña '+campNom(o)+".</span>";return}
+  var h="<b>Tambores "+campNom(o)+"</b>";
+  if(otros){var ro=tKg(ts.filter(function(t){return t.productor!="Propio"}));h+='<div class="mut">Además, '+otros+" de otros productores ("+(ro.pend?"≈ ":"")+fmtN(ro.kg)+" kg), que no se suman a tu producción.</div>"}
+  h+=ts.map(function(t){
+    var kg=t.neto?fmtN(t.neto)+" kg neto":"≈ "+tEst(t)+" kg (sin datos de Villamora)";
+    var d=[t.tipo||"Alto"];if(t.etiqueta)d.unshift("Etiqueta "+t.etiqueta);
+    var l2=[];if(t.colmenar)l2.push(t.colmenar);if(t.lote)l2.push("lote "+t.lote);if(t.productor!="Propio")l2.push("de "+t.productor);if(t.destino)l2.push(t.destino);
+    var l3=[kg];if(t.bruto)l3.push("bruto "+fmtN(t.bruto));if(t.tara)l3.push("tara "+t.tara);if(t.color)l3.push("color "+t.color);
+    return'<div class="v"><button class="del" data-id="'+esc(t.id)+'">Borrar</button><button class="ed" data-id="'+esc(t.id)+'">Editar</button><b>N° '+esc(t.numero)+" · "+esc(d.join(" · "))+'</b><span class="mut">'+esc(l2.join(" · "))+"</span><div>"+esc(l3.join(" · "))+"</div>"+(t.obs?'<div class="mut">'+esc(t.obs)+"</div>":"")+"</div>"
+  }).join("");
+  L.innerHTML=h;
+  Array.prototype.forEach.call(L.querySelectorAll(".del"),function(b){b.onclick=function(){tBorrar(b.getAttribute("data-id"))}});
+  Array.prototype.forEach.call(L.querySelectorAll(".ed"),function(b){b.onclick=function(){tEditar(b.getAttribute("data-id"))}});
+}
+function tRefresh(){campOpts();if(tAuto&&!tedit)$("tnum").value=tSig();if(!$("v-t").hidden)tLista();if(!$("v-c").hidden)campanias()}
+function tInit(){
+  $("tdest").innerHTML=TD.map(function(d){return"<option>"+d+"</option>"}).join("");
+  campOpts();tReset();
+  $("tguardar").onclick=tGuardar;$("tcancel").onclick=function(){tReset();$("tmsg").textContent=""};
+  $("tnum").oninput=function(){tAuto=false;tWarn()};$("tet").oninput=tWarn;
+  $("tcamp").onchange=function(){if(!tedit){$("tnum").value=tSig();tAuto=true}tWarn();lotesList()};
+  $("tlote").oninput=function(){var o=+$("tcamp").value,l=$("tlote").value.trim();visitas.forEach(function(v){if(l&&v.lote==l&&campDe(v.fecha)==o)$("tcol").value=v.colmenar})};
+  $("tfil").onchange=tLista;
+}
+
+var OUT="outbox_v1",CACHE="cache_v1",base={visitas:[],tambores:[],campanias:[],movs:[],precios:[],canjes:[]},flushing=false,dbOk=false;
+/* ---------- conexión con la planilla de Google ---------- */
+var API="https://script.google.com/macros/s/AKfycbwLd4t0qGa-R43E-M_bNAlVsviWePp4iB8k2rcKCX3RK63Sewpv6S_ghL42LXRHJpJX7g/exec",CLK="clave_v1",bajando=false,claveMal=false,ultBajada=0,errRed=false;
+function clave(){try{return localStorage.getItem(CLK)||""}catch(e){return""}}
+function conectada(){return!!clave()&&!claveMal}
+function conTiempo(url,op,ms){return Promise.race([fetch(url,op),new Promise(function(_,rej){setTimeout(function(){rej(new Error("tiempo"))},ms)})]).then(function(r){if(!r.ok)throw new Error("http "+r.status);return r.json()})}
+function bajar(){
+  if(bajando||!conectada()||navigator.onLine===false)return;bajando=true;
+  conTiempo(API+"?clave="+encodeURIComponent(clave())+"&_="+Date.now(),{},30000).then(function(res){bajando=false;
+    if(!res||!res.ok){if(res&&res.error=="clave"){claveMal=true;cfgMostrar()}estado();return}
+    errRed=false;dbOk=true;ultBajada=Date.now();
+    Object.keys(base).forEach(function(c){base[c]=(res.data[c]||[]).map(function(f){return Esquema.deFila(c,f)})});
+    cacheGuardar();aplicar();campOpts();if(!$("v-c").hidden)campanias()},
+  function(){bajando=false;errRed=true;estado()});
+}
+function outLeer(){try{return JSON.parse(localStorage.getItem(OUT)||"[]")}catch(e){return[]}}
+function outGuardar(o){try{localStorage.setItem(OUT,JSON.stringify(o))}catch(e){}}
+function cacheGuardar(){try{localStorage.setItem(CACHE,JSON.stringify(base))}catch(e){}}
+function cacheLeer(){try{var c=JSON.parse(localStorage.getItem(CACHE)||"null");if(c){Object.keys(base).forEach(function(k){base[k]=c[k]||[]})}}catch(e){}}
+function aplicar(){
+  var o=outLeer();
+  ["visitas","tambores","movs","precios","canjes"].forEach(function(c){var m={};base[c].forEach(function(x){m[x.id]=x});o.forEach(function(w){if(w.c!=c)return;if(w.op=="del")delete m[w.id];else m[w.id]=w.data});var a=Object.keys(m).map(function(k){return m[k]});if(c=="visitas")visitas=a;else if(c=="tambores")tambores=a;else if(c=="movs")movs=a;else if(c=="precios")precios=a;else canjes=a});
+  camps=base.campanias;ordenar();nombres();
+  if(!$("v-h").hidden)lista();if(!$("v-r").hidden)resumen();tRefresh();if(!tedit)colShow();estado();gRefresh();
+}
+function escribir(c,id,data){var o=outLeer().filter(function(w){return!(w.c==c&&w.id==id)});o.push({c:c,id:id,op:data?"set":"del",data:data,t:Date.now()});outGuardar(o);aplicar();flush()}
+function estado(){var n=outLeer().length,on=navigator.onLine!==false,e=$("estado");
+  if(!clave()){e.style.color="";e.textContent="⚠ Falta conectar la planilla · tocá acá";return}
+  if(claveMal){e.style.color="";e.textContent="⚠ La clave no coincide con la planilla · tocá acá";return}
+  if(n){e.style.color="";e.textContent="⏳ "+n+(n==1?" cambio guardado":" cambios guardados")+" en el teléfono · "+(on&&!errRed?"enviando a la planilla…":"se envían solos cuando haya señal")}
+  else{e.style.color="";e.textContent=!on?"Sin señal · lo que cargues se guarda en el teléfono":errRed?"Sin conexión con la planilla · lo que cargues se guarda en el teléfono":dbOk?"✓ Todo en la planilla":"Conectando con la planilla…"}}
+function flush(){
+  estado();if(flushing||!conectada()||navigator.onLine===false)return;var o=outLeer();if(!o.length)return;flushing=true;
+  var lote=o.slice(0,40),ops=lote.map(function(w){return{c:w.c,id:w.id,op:w.op,t:w.t,fila:w.op=="set"?Esquema.aFila(w.c,w.data):null}});
+  conTiempo(API,{method:"POST",body:JSON.stringify({clave:clave(),ops:ops})},45000).then(function(res){flushing=false;
+    if(!res||!res.ok){if(res&&res.error=="clave"){claveMal=true;cfgMostrar()}estado();return}
+    errRed=false;dbOk=true;var h={};(res.hechos||[]).forEach(function(k){h[k]=1});
+    outGuardar(outLeer().filter(function(x){return!h[x.c+"|"+x.id+"|"+x.t]}));
+    lote.forEach(function(w){var arr=base[w.c];if(!arr)return;var i=-1;arr.forEach(function(x,j){if(x.id==w.id)i=j});if(w.op=="del"){if(i>=0)arr.splice(i,1)}else if(i>=0)arr[i]=w.data;else arr.push(w.data)});
+    cacheGuardar();aplicar();if(outLeer().length)flush();else bajar()},
+  function(){flushing=false;errRed=true;estado()});
+}
+function cfgMostrar(){$("cfg").hidden=false;$("cfg-clave").value=clave();$("cfg-info").textContent=clave()&&!claveMal?"Conectada. Si cambiaste la clave en la planilla, poné la nueva.":"";window.scrollTo(0,0)}
+function cfgInit(){
+  $("estado").onclick=function(){if($("cfg").hidden)cfgMostrar();else $("cfg").hidden=true};
+  $("cfg-ok").onclick=function(){var k=$("cfg-clave").value.trim(),m=$("cfg-msg");m.className="msg";
+    if(!k){m.className="msg err";m.textContent="Escribí la clave";return}
+    m.textContent="Probando…";
+    conTiempo(API+"?clave="+encodeURIComponent(k)+"&_="+Date.now(),{},30000).then(function(res){
+      if(res&&res.ok){try{localStorage.setItem(CLK,k)}catch(e){}claveMal=false;m.textContent="✓ Conectada a la planilla";setTimeout(function(){$("cfg").hidden=true;m.textContent=""},1500);flush();bajar()}
+      else{m.className="msg err";m.textContent=res&&res.error=="clave"?"Esa clave no coincide con la de la planilla":"La planilla no respondió bien. Probá de nuevo."}},
+    function(){m.className="msg err";m.textContent="Sin conexión. Hace falta señal para conectar la primera vez."})};
+  if(!clave())cfgMostrar();
+}
+function snapDocs(s){return s.docs.map(function(d){var x=typeof d.data=="function"?d.data():d;if(!x.id&&d.id)x.id=d.id;return x})}
+cacheLeer();
+(function(){var vv=lsLeer(),tt=tLeer();if(vv.length||tt.length){var o=outLeer();vv.forEach(function(v){o.push({c:"visitas",id:v.id,op:"set",data:v,t:Date.now()})});tt.forEach(function(t){o.push({c:"tambores",id:t.id,op:"set",data:t,t:Date.now()})});outGuardar(o);try{localStorage.removeItem(LS);localStorage.removeItem(TLS)}catch(e){}}})();
+/* ================= GESTIÓN ================= */
+var movs=[],precios=[],canjes=[],gAmb="apicola",gTipo="gasto",gCat="",gUni="plata",gColor="Clara",gColor2="Clara",gEdit=null,gmAmb="todos",gtAmb="apicola",gkTipo="Alto",BALDE=12;
+var AMB={apicola:"Apícola",sala:"Sala de extracción",personal:"Personal"};
+var TIPOS={apicola:[["gasto","Gasto"],["ingreso","Ingreso"],["otro","Inversión · crédito · retiro"]],sala:[["gasto","Gasto"],["ingreso","Ingreso"],["otro","Inversión"]],personal:[["gasto","Gasto"],["ingreso","Ingreso"],["otro","Ahorro"]]};
+var GC={
+  apicola:{gasto:["Alimentación","Sanidad","Movilidad","Mano de obra","Reinas y celdas","Cera","Material","Mantenimiento de colmenares","Tambores","Pago a los campos","Venta (fletes, análisis)","Otros directos","Instalaciones","Impuestos y aportes","Administración","Seguros","Alquiler"],
+    ingreso:["Miel","Cera","Material vivo","Otros ingresos"],otro:["Inversión","Crédito tomado","Cuota de crédito","Retiro para la casa"]},
+  sala:{gasto:["Luz","Gas","Limpieza e insumos","Mano de obra de sala","Mantenimiento de equipos","Otros"],ingreso:["Servicio de extracción (8%)","Venta de tambores vacíos","Otros ingresos"],otro:["Inversión"]},
+  personal:{gasto:["Casa","Transporte","Comida","Actividades","Hele","Impositivo","Necesidades","Salud","Cuotas","Crédito","Obra galpón","Casa 421","Inusuales"],ingreso:["Alquiler 421","Trabajo","Otros ingresos"],otro:["Ahorro"]}};
+var ESTR=["Instalaciones","Impuestos y aportes","Administración","Seguros","Alquiler"];
+var MIELU={"Pago a los campos":"baldes","Servicio de extracción (8%)":"kg"};
+var MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+function pesos(x){return(x<0?"−$ ":"$ ")+Math.abs(Math.round(x)).toLocaleString("es-AR")}
+function pesosK(x){var a=Math.abs(x);return(x<0?"−":"")+(a>=1e6?"$ "+(a/1e6).toLocaleString("es-AR",{maximumFractionDigits:1})+" M":"$ "+Math.round(a).toLocaleString("es-AR"))}
+function numv(i){var v=parseFloat(String($(i).value).replace(/\./g,"").replace(",","."));return isNaN(v)?0:v}
+function numv2(i){var s=String($(i).value).trim();if(/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s))return numv(i);var v=parseFloat(s.replace(",","."));return isNaN(v)?0:v}
+function colorDe(mm){var n=parseFloat(String(mm||"").replace(",","."));if(isNaN(n))return"Clara";return n>50?"Oscura":"Clara"}
+function precioA(f,color){var ps=precios.filter(function(p){return p.fecha<=f}).sort(function(a,b){return a.fecha<b.fecha?1:a.fecha>b.fecha?-1:0});if(!ps.length)ps=precios.slice().sort(function(a,b){return a.fecha<b.fecha?-1:1});if(!ps.length)return 0;var top=ps[0],same=ps.filter(function(p){return p.fecha==top.fecha});var k=color=="Oscura"?"oscura":"clara",best=0;same.forEach(function(p){if((p[k]||0)>best)best=p[k]||0});if(!best&&k=="oscura")return precioA(f,"Clara");return best}
+function movKg(m){return m.unidad=="miel"?(m.cant||0)*(MIELU[m.categoria]=="baldes"?BALDE:1):0}
+function movVal(m){return m.unidad=="miel"?movKg(m)*precioA(m.fecha,m.color):(m.monto||0)}
+function enRango(f,a,b){return f>=a&&f<b}
+function ejRango(o){return[o+"-05-01",(o+1)+"-05-01"]}
+
+/* ---------- modo ---------- */
+var modoAct="campo";
+function modo(m){modoAct=m;try{localStorage.setItem("modo_v1",m)}catch(e){}
+  $("m-campo").classList.toggle("on",m=="campo");$("m-gest").classList.toggle("on",m=="gest");$("nav-c").hidden=m!="campo";$("nav-g").hidden=m!="gest";
+  if(m=="campo")tab("n");else gtab("c");window.scrollTo(0,0)}
+function gtab(k){["n","h","r","t","c"].forEach(function(x){$("v-"+x).hidden=true});["c","m","t","p","k"].forEach(function(x){$("v-g"+x).hidden=x!=k;$("g-"+x).classList.toggle("on",x==k)});
+  if(k=="c")gForm();if(k=="m")gmLista();if(k=="t")gtRender();if(k=="p")gpLista();if(k=="k")gkLista();window.scrollTo(0,0)}
+function gRefresh(){if(modoAct!="gest")return;if(!$("v-gm").hidden)gmLista();if(!$("v-gt").hidden)gtRender();if(!$("v-gp").hidden)gpLista();if(!$("v-gk").hidden)gkLista();if(!$("v-gc").hidden)gVal()}
+
+/* ---------- cargar movimiento ---------- */
+function chipsIn(id,items,cur,fn){var c=$(id);c.innerHTML="";items.forEach(function(it){var v=Array.isArray(it)?it[0]:it,t=Array.isArray(it)?it[1]:it;var b=document.createElement("button");b.type="button";b.className="chip"+(v==cur?" on":"");b.textContent=t;b.onclick=function(){fn(v)};c.appendChild(b)})}
+function gForm(){
+  chipsIn("g-amb",[["apicola","Apícola"],["sala","Sala de extracción"]],gAmb,function(v){gAmb=v;gTipo="gasto";gCat="";gForm()});
+  chipsIn("g-tipo",TIPOS[gAmb],gTipo,function(v){gTipo=v;gCat="";gForm()});
+  chipsIn("g-cat",GC[gAmb][gTipo],gCat,function(v){gCat=v;gUni=MIELU[v]?"miel":"plata";gForm()});
+  var mu=MIELU[gCat];$("g-unibox").hidden=!mu;
+  if(mu)chipsIn("g-uni",[["miel",mu=="baldes"?"Baldes de miel":"Kg de miel"],["plata","Plata"]],gUni,function(v){gUni=v;gForm()});
+  var enMiel=mu&&gUni=="miel";$("g-pesos").hidden=enMiel;$("g-mielbox").hidden=!enMiel;$("g-cantl").textContent=mu=="baldes"?"Baldes ("+BALDE+" kg)":"Kg de miel";
+  chipsIn("g-color",["Clara","Oscura"],gColor,function(v){gColor=v;gForm()});
+  var vm=gAmb=="apicola"&&gTipo=="ingreso"&&gCat=="Miel";$("g-kgbox").hidden=!vm;chipsIn("g-color2",["Clara","Oscura"],gColor2,function(v){gColor2=v;gForm()});
+  $("g-colbox").hidden=!(gCat=="Pago a los campos");
+  gVal();
+}
+function gVal(){var t="";if(!$("g-mielbox").hidden){var kg=numv2("g-cant")*(MIELU[gCat]=="baldes"?BALDE:1),p=precioA($("g-fec").value||hoy(),gColor);t=kg?fmtN(kg)+" kg de miel"+(p?" ≈ "+pesos(kg*p)+" (a "+pesos(p)+"/kg "+gColor.toLowerCase()+")":" · cargá una cotización en Precios para pasarlo a pesos"):""}
+  else if(!$("g-kgbox").hidden){var m=numv("g-monto"),k=numv2("g-kgv");if(m&&k)t="Precio obtenido: "+pesos(m/k)+"/kg"}
+  $("g-val").textContent=t}
+function gReset(){["g-det","g-monto","g-cant","g-kgv","g-col"].forEach(function(i){$(i).value=""});gEdit=null;$("g-form").textContent="Nuevo movimiento";$("g-cancel").hidden=true;$("g-guardar").textContent="Guardar movimiento";gForm()}
+function gGuardar(){
+  var m=$("g-msg");m.className="msg";
+  if(!gCat){m.className="msg err";m.textContent="Elegí una categoría";return}
+  var enMiel=!$("g-mielbox").hidden,f=$("g-fec").value||hoy();
+  var d={id:gEdit||"m"+Date.now(),creado:Date.now(),fecha:f,ambito:gAmb,tipo:gTipo,categoria:gCat,detalle:$("g-det").value.trim(),unidad:enMiel?"miel":"plata",
+    monto:enMiel?0:numv("g-monto"),cant:enMiel?numv2("g-cant"):0,color:enMiel?gColor:"",colmenar:gCat=="Pago a los campos"?$("g-col").value.trim():"",kg:(!$("g-kgbox").hidden?numv2("g-kgv"):0),kgcolor:(!$("g-kgbox").hidden?gColor2:"")};
+  if(enMiel?!d.cant:!d.monto){m.className="msg err";m.textContent=enMiel?"Falta la cantidad de miel":"Falta el monto";return}
+  var old=gEdit?movs.filter(function(x){return x.id==gEdit})[0]:null;if(old)d.creado=old.creado||d.creado;
+  escribir("movs",d.id,d);m.textContent=(old?"✓ Movimiento actualizado: ":"✓ Guardado: ")+d.categoria+" · "+(enMiel?fmtN(movKg(d))+" kg de miel":pesos(d.monto));gReset();
+}
+function gEditar(id){var d=movs.filter(function(x){return x.id==id})[0];if(!d)return;gtab("c");gEdit=id;gAmb=d.ambito;gTipo=d.tipo;gCat=d.categoria;gUni=d.unidad;gColor=d.color||"Clara";gColor2=d.kgcolor||"Clara";
+  $("g-det").value=d.detalle||"";$("g-fec").value=d.fecha;$("g-monto").value=d.monto?String(d.monto).replace(".",","):"";$("g-cant").value=d.cant?String(d.cant).replace(".",","):"";$("g-kgv").value=d.kg?String(d.kg).replace(".",","):"";$("g-col").value=d.colmenar||"";
+  $("g-form").textContent="Editar movimiento";$("g-cancel").hidden=false;$("g-guardar").textContent="Guardar cambios";$("g-msg").textContent="";gForm()}
+function gBorrar(id){var b=document.querySelector('#gm-lista .del[data-id="'+id+'"]');if(b&&b.textContent!="¿Seguro?"){b.textContent="¿Seguro?";return}escribir("movs",id,null)}
+
+/* ---------- lista de movimientos ---------- */
+function gmLista(){
+  chipsIn("gm-amb",[["todos","Todos"],["apicola","Apícola"],["sala","Sala"]],gmAmb,function(v){gmAmb=v;gmLista()});
+  var sel=$("gm-mes"),pv=sel.value,ms={};ms[hoy().slice(0,7)]=1;movs.forEach(function(x){ms[x.fecha.slice(0,7)]=1});
+  sel.innerHTML='<option value="">Todos los meses</option>'+Object.keys(ms).sort().reverse().map(function(k){return'<option value="'+k+'">'+MESES[+k.slice(5,7)-1]+" "+k.slice(0,4)+"</option>"}).join("");sel.value=pv!=null&&pv!==""?pv:hoy().slice(0,7);if(sel.selectedIndex<0)sel.value="";
+  var mes=sel.value,L=movs.filter(function(x){return(gmAmb=="todos"||x.ambito==gmAmb)&&(!mes||x.fecha.slice(0,7)==mes)}).sort(function(a,b){return a.fecha<b.fecha?1:a.fecha>b.fecha?-1:(b.creado||0)-(a.creado||0)});
+  var I=0,G=0;L.forEach(function(x){var v=movVal(x);if(x.tipo=="ingreso")I+=v;else if(x.tipo=="gasto")G+=v});
+  $("gm-i").textContent=pesosK(I);$("gm-g").textContent=pesosK(G);$("gm-s").textContent=pesosK(I-G);
+  $("gm-lista").innerHTML=L.length?L.map(function(x){var v=movVal(x),cl=x.tipo=="ingreso"?"pos":x.tipo=="gasto"?"neg":"";
+    var sub=[fmt(x.fecha),AMB[x.ambito]];if(x.colmenar)sub.push(x.colmenar);if(x.unidad=="miel")sub.push(fmtN(movKg(x))+" kg de miel "+(x.color||"").toLowerCase());if(x.kg)sub.push(fmtN(x.kg)+" kg vendidos");
+    return'<div class="mv"><div class="mv-l"><b>'+esc(x.categoria)+(x.detalle?' <span class="mut">· '+esc(x.detalle)+"</span>":"")+'</b><span class="mut">'+esc(sub.join(" · "))+'</span></div><div class="mv-r"><em class="'+cl+'">'+(x.tipo=="gasto"?"−":x.tipo=="ingreso"?"+":"")+pesos(v)+'</em><span><button class="ed" data-id="'+esc(x.id)+'">Editar</button><button class="del" data-id="'+esc(x.id)+'">Borrar</button></span></div></div>'}).join(""):'<span class="mut">No hay movimientos con este filtro. Cargalos desde "Cargar".</span>';
+  Array.prototype.forEach.call($("gm-lista").querySelectorAll(".ed"),function(b){b.onclick=function(){gEditar(b.getAttribute("data-id"))}});
+  Array.prototype.forEach.call($("gm-lista").querySelectorAll(".del"),function(b){b.onclick=function(){gBorrar(b.getAttribute("data-id"))}});
+}
+
+/* ---------- precios ---------- */
+function gpGuardar(){var m=$("gp-msg");m.className="msg";var c=$("gp-comp").value.trim(),cl=numv("gp-cl"),os=numv("gp-os");
+  if(!c||(!cl&&!os)){m.className="msg err";m.textContent="Falta el comprador o el precio";return}
+  var d={id:"p"+Date.now(),fecha:$("gp-fec").value||hoy(),comprador:c,clara:cl,oscura:os};escribir("precios",d.id,d);m.textContent="✓ Cotización guardada";$("gp-cl").value="";$("gp-os").value=""}
+function gpLista(){var cs={};precios.forEach(function(p){cs[p.comprador]=1});cs["Villamora"]=1;$("gp-comps").innerHTML=Object.keys(cs).map(function(c){return'<option value="'+esc(c)+'">'}).join("");
+  var L=precios.slice().sort(function(a,b){return a.fecha<b.fecha?1:a.fecha>b.fecha?-1:0});
+  var ult={};L.forEach(function(p){if(!ult[p.comprador])ult[p.comprador]=p});var mx=0;Object.keys(ult).forEach(function(k){if(ult[k].clara>mx)mx=ult[k].clara});
+  var h='<b>Último precio de cada comprador</b>'+(Object.keys(ult).length?kv(Object.keys(ult).map(function(k){var p=ult[k];return[k+" ("+fmt(p.fecha)+")",(p.clara?pesos(p.clara)+" clara":"")+(p.oscura?" · "+pesos(p.oscura)+" oscura":"")+(p.clara==mx&&Object.keys(ult).length>1?" ★":""),p.clara==mx?"tot":""]})):'<div class="mut">Todavía no hay cotizaciones. Cargá la primera arriba.</div>');
+  if(L.length)h+='<h3 style="margin-top:14px">Historial</h3>'+L.map(function(p){return'<div class="mv"><div class="mv-l"><b>'+esc(p.comprador)+'</b><span class="mut">'+fmt(p.fecha)+'</span></div><div class="mv-r"><em>'+(p.clara?pesos(p.clara)+" cl":"")+(p.oscura?" · "+pesos(p.oscura)+" os":"")+'</em><span><button class="del" data-id="'+esc(p.id)+'">Borrar</button></span></div></div>'}).join("");
+  $("gp-lista").innerHTML=h;Array.prototype.forEach.call($("gp-lista").querySelectorAll(".del"),function(b){b.onclick=function(){if(b.textContent!="¿Seguro?"){b.textContent="¿Seguro?";return}escribir("precios",b.getAttribute("data-id"),null)}})}
+
+/* ---------- canjes ---------- */
+function kgLleno(t){return t=="Petizo"?300:340}
+function gkInfo(){var v=num("gk-vac"),r=num("gk-rel");$("gk-info").textContent=v&&r?"Vas a deber "+nf(v/r)+" "+(gkTipo=="Alto"?"altos":"petizos")+" llenos · cada vacío te cuesta ≈ "+nf(kgLleno(gkTipo)/r)+" kg de miel":""}
+function gkGuardar(){var m=$("gk-msg");m.className="msg";var d={id:"k"+Date.now(),fecha:$("gk-fec").value||hoy(),proveedor:$("gk-prov").value.trim()||"Villamora",tipo:gkTipo,vacios:num("gk-vac"),relacion:num("gk-rel")};
+  if(!d.vacios||!d.relacion){m.className="msg err";m.textContent="Falta la cantidad de vacíos o la relación";return}escribir("canjes",d.id,d);m.textContent="✓ Canje guardado";$("gk-vac").value="";$("gk-rel").value="";gkInfo()}
+function canjeEst(k){var ent=tambores.filter(function(t){return t.canje==k.id}),deb=k.vacios/k.relacion,kgE=0;ent.forEach(function(t){kgE+=tEst(t)});var falta=Math.max(0,deb-ent.length);return{ent:ent,deb:deb,falta:falta,kgE:kgE,kgTot:kgE+falta*kgLleno(k.tipo)}}
+function gkLista(){chipsIn("gk-tipo",[["Alto","Alto (340 kg)"],["Petizo","Petizo (300 kg)"]],gkTipo,function(v){gkTipo=v;gkLista()});gkInfo();
+  var ps={};canjes.forEach(function(k){ps[k.proveedor]=1});ps["Villamora"]=1;$("gk-provs").innerHTML=Object.keys(ps).map(function(c){return'<option value="'+esc(c)+'">'}).join("");
+  var L=canjes.slice().sort(function(a,b){return a.fecha<b.fecha?1:-1});
+  if(!L.length){$("gk-lista").innerHTML='<div class="card"><span class="mut">Todavía no hay canjes. Cuando recibas tambores vacíos, cargalos arriba.</span></div>';return}
+  var libres=tambores.filter(function(t){return t.productor=="Propio"&&!t.canje});
+  $("gk-lista").innerHTML=L.map(function(k){var e=canjeEst(k),tt=k.tipo=="Petizo"?"petizos":"altos";
+    var opts=libres.filter(function(t){return(t.tipo||"Alto")==k.tipo}).sort(function(a,b){return b.campana-a.campana||b.numero-a.numero}).map(function(t){return'<option value="'+esc(t.id)+'">N° '+t.numero+" · "+campNom(t.campana)+(t.etiqueta?" · et. "+esc(t.etiqueta):"")+" · "+(t.neto?fmtN(t.neto)+" kg":"≈ "+tEst(t)+" kg")+"</option>"}).join("");
+    return'<div class="card"><div class="rs-h"><div class="rs-n"><b>'+esc(k.proveedor)+" · "+k.vacios+" "+tt+" a "+k.relacion+' a 1</b><span class="mut">Recibidos el '+fmt(k.fecha)+'</span></div><div class="rs-c"><b class="'+(e.falta>0?"neg":"pos")+'">'+nf(e.falta)+'</b><span class="mut">'+(e.falta>0?"llenos a entregar":"saldado")+"</span></div></div>"
+     +kv([["Debés en total",nf(e.deb)+" "+tt+" llenos"],["Entregados",e.ent.length?e.ent.map(function(t){return"N° "+t.numero}).join(", ")+" · "+fmtN(e.kgE)+" kg":"ninguno"],["Costo de cada vacío",nf(e.kgTot/k.vacios)+" kg de miel"]])
+     +(e.falta>0?(opts?'<label>Entregar un tambor lleno</label><div class="row"><select class="gk-sel" data-k="'+esc(k.id)+'">'+opts+'</select><button type="button" class="sec gk-ent" data-k="'+esc(k.id)+'" style="flex:0 0 96px;margin-top:0">Entregar</button></div>':'<div class="mut" style="margin-top:6px">Cuando llenes tambores '+tt+', cargalos en Campo → Tambores y vas a poder entregarlos desde acá.</div>'):"")
+     +(e.ent.length?'<button type="button" class="ed gk-undo" data-k="'+esc(k.id)+'" style="float:none;margin:8px 0 0">Deshacer la última entrega</button>':"")
+     +'<button type="button" class="del gk-del" data-k="'+esc(k.id)+'" style="float:none;margin:8px 0 0 12px">Borrar canje</button></div>'}).join("");
+  Array.prototype.forEach.call($("gk-lista").querySelectorAll(".gk-ent"),function(b){b.onclick=function(){var k=b.getAttribute("data-k"),s=document.querySelector('.gk-sel[data-k="'+k+'"]'),t=tambores.filter(function(x){return x.id==s.value})[0];if(!t)return;var n=JSON.parse(JSON.stringify(t));n.canje=k;n.destino="Canje";escribir("tambores",n.id,n)}});
+  Array.prototype.forEach.call($("gk-lista").querySelectorAll(".gk-undo"),function(b){b.onclick=function(){var k=b.getAttribute("data-k"),e=tambores.filter(function(x){return x.canje==k});var t=e[e.length-1];if(!t)return;var n=JSON.parse(JSON.stringify(t));delete n.canje;n.destino="En sala";escribir("tambores",n.id,n)}});
+  Array.prototype.forEach.call($("gk-lista").querySelectorAll(".gk-del"),function(b){b.onclick=function(){if(b.textContent!="¿Seguro?"){b.textContent="¿Seguro?";return}escribir("canjes",b.getAttribute("data-k"),null)}});
+}
+
+/* ---------- tablero ---------- */
+function barras(rows,total,fmtv){var mx=0;rows.forEach(function(r){if(r.v>mx)mx=r.v});return'<div class="bars">'+rows.map(function(r){return'<div class="br"><div class="br-t"><span>'+esc(r.n)+'</span><em>'+fmtv(r)+'</em></div><div class="br-b"><i style="width:'+(mx?Math.max(1,r.v/mx*100):0)+'%"></i></div></div>'}).join("")+"</div>"}
+function gtRender(){
+  gtAmb="apicola";$("gt-amb").hidden=true;
+  var sel=$("gt-per"),pv=sel.value;
+  if(gtAmb=="apicola"){$("gt-perl").textContent="Ejercicio (mayo a abril)";var os={};os[campHoy()]=1;movs.forEach(function(m){os[campDe(m.fecha)]=1});tambores.forEach(function(t){os[t.campana]=1});
+    sel.innerHTML=Object.keys(os).map(Number).sort(function(a,b){return b-a}).map(function(o){return'<option value="'+o+'">'+campNom(o)+(o==campHoy()?" (en curso)":"")+"</option>"}).join("")}
+  else{$("gt-perl").textContent="Año";var ys={};ys[hoy().slice(0,4)]=1;movs.forEach(function(m){ys[m.fecha.slice(0,4)]=1});sel.innerHTML=Object.keys(ys).sort().reverse().map(function(y){return'<option>'+y+"</option>"}).join("")}
+  sel.value=pv;if(sel.selectedIndex<0)sel.selectedIndex=0;sel.onchange=gtRender;
+  if(gtAmb=="apicola")gtApi(+sel.value);else gtPer(sel.value);
+}
+function gtApi(o){
+  var R=ejRango(o),hoyF=hoy(),fRef=hoyF<R[1]?hoyF:R[1],pCl=precioA(fRef,"Clara"),pOs=precioA(fRef,"Oscura");
+  var M=movs.filter(function(m){return enRango(m.fecha,R[0],R[1])});
+  var A=M.filter(function(m){return m.ambito=="apicola"}),S=M.filter(function(m){return m.ambito=="sala"});
+  var cats={},dir=0,est=0,kgEq=0;
+  A.filter(function(m){return m.tipo=="gasto"}).forEach(function(m){var v=movVal(m),p=precioA(m.fecha,"Clara");cats[m.categoria]=cats[m.categoria]||{v:0,kg:0};cats[m.categoria].v+=v;if(p)cats[m.categoria].kg+=v/p;if(ESTR.indexOf(m.categoria)>=0)est+=v;else dir+=v});
+  var kgCanje=0,vCanje=0;canjes.filter(function(k){return enRango(k.fecha,R[0],R[1])}).forEach(function(k){var e=canjeEst(k),p=precioA(k.fecha,"Clara");kgCanje+=e.kgE;vCanje+=e.kgTot*p;var c=cats["Tambores (canje)"]=cats["Tambores (canje)"]||{v:0,kg:0};c.v+=e.kgTot*p;c.kg+=e.kgTot});
+  dir+=vCanje;var gastos=dir+est;
+  var tp=tambores.filter(function(t){return t.campana==o&&t.productor=="Propio"}),kgProd=0,kgCl=0,kgOs=0,pend=0;tp.forEach(function(t){var k=tEst(t);kgProd+=k;if(colorDe(t.color)=="Oscura")kgOs+=k;else kgCl+=k;if(!t.neto)pend++});
+  var vtas=A.filter(function(m){return m.tipo=="ingreso"&&m.categoria=="Miel"}),vtaP=0,vtaKg=0;vtas.forEach(function(m){vtaP+=m.monto||0;vtaKg+=m.kg||0});
+  var kgCampos=0,vCampos=0;A.filter(function(m){return m.unidad=="miel"}).forEach(function(m){kgCampos+=movKg(m);vCampos+=movVal(m)});
+  var otrosI=0;A.filter(function(m){return m.tipo=="ingreso"&&m.categoria!="Miel"}).forEach(function(m){otrosI+=movVal(m)});
+  var kgCanjeEnt=0,vCanjeEnt=0;tambores.forEach(function(t){if(t.canje&&canjes.some(function(k){return k.id==t.canje&&enRango(k.fecha,R[0],R[1])})){kgCanjeEnt+=tEst(t);vCanjeEnt+=tEst(t)*(colorDe(t.color)=="Oscura"?(pOs||pCl):pCl)}});
+  var stock=Math.max(0,kgProd-vtaKg-kgCampos-kgCanjeEnt),vStock=stock*(kgProd?((kgCl*pCl+kgOs*(pOs||pCl))/kgProd):pCl);
+  var ingresos=vtaP+vCampos+vCanjeEnt+vStock+otrosI,res=ingresos-gastos;
+  var col=0;var nm={};visitas.forEach(function(v){nm[v.colmenar.trim().toLowerCase()]=v.colmenar;var d=String(v.destino||"").trim();if(v.tras_col&&d)nm[d.toLowerCase()]=d});Object.keys(nm).forEach(function(k){col+=colAct(nm[k],"9999-12-31",null).base||0});
+  var c0=camps.filter(function(c){return c.orden==o})[0];if(!col&&c0)col=c0.colmenas||0;
+  var h="";
+  if(!pCl)h+='<div class="card warnc">Cargá al menos una cotización en <b>Precios</b>: sin precio de la miel no puedo pasar la miel a pesos (pagos a los campos, canjes, stock).</div>';
+  h+='<div class="kpi"><div><b>'+pesosK(gastos)+'</b><span class="mut">gastos</span></div><div><b>'+pesosK(ingresos)+'</b><span class="mut">ingresos + miel en stock</span></div><div><b class="'+(res<0?"neg":"pos")+'">'+pesosK(res)+'</b><span class="mut">resultado</span></div></div>';
+  h+='<div class="kpi"><div><b>'+(kgProd?pesos(gastos/kgProd):"—")+'</b><span class="mut">costo por kg</span></div><div><b>'+(col?pesosK(gastos/col):"—")+'</b><span class="mut">costo por colmena</span></div><div><b>'+(pCl?fmtN(gastos/pCl):"—")+'</b><span class="mut">kg para cubrir gastos</span></div></div>';
+  var rows=Object.keys(cats).map(function(k){return{n:k,v:cats[k].v,kg:cats[k].kg}}).sort(function(a,b){return b.v-a.v});
+  h+='<div class="card"><b>Adónde va la plata</b><div class="mut">Gastos del ejercicio '+campNom(o)+(gastos?" · directos "+pesosK(dir)+" · estructura "+pesosK(est):"")+"</div>"+(rows.length?barras(rows,gastos,function(r){return pesosK(r.v)+" · "+Math.round(r.v/gastos*100)+"%"+(r.kg?" · "+fmtN(r.kg)+" kg":"")}):'<div class="mut" style="margin-top:6px">Todavía no hay gastos cargados en este ejercicio.</div>')+(rows.length&&pCl?'<div class="mut" style="margin-top:6px">Los kg son lo que te costó cada rubro en miel clara, al precio de la fecha de cada gasto.</div>':"")+"</div>";
+  h+='<div class="card"><b>Adónde va la miel</b>'+kv([["Producida (tambores propios)",fmtN(kgProd)+" kg"+(pend?" · ≈ "+pend+" sin pesar":""),"tot"],kgOs?["Clara / oscura",fmtN(kgCl)+" / "+fmtN(kgOs)+" kg"]:null,vtaKg?["Vendida",("−"+fmtN(vtaKg)+" kg"),"neg"]:null,kgCampos?["Pagada a los campos","−"+fmtN(kgCampos)+" kg","neg"]:null,kgCanjeEnt?["Entregada por canje de tambores","−"+fmtN(kgCanjeEnt)+" kg","neg"]:null,["En stock",fmtN(stock)+" kg"+(pCl?" ≈ "+pesosK(vStock):""),"tot"],(kgProd&&col)?["Kg por colmena",nf(kgProd/col)]:null])+"</div>";
+  h+='<div class="card"><b>Resultado</b>'+kv([["Ventas de miel",pesos(vtaP)],vCampos?["Miel usada para pagar campos",pesos(vCampos)]:null,kgCanjeEnt?["Miel usada en canjes",pesos(vCanjeEnt)]:null,["Miel en stock (valorizada)",pesos(vStock)],otrosI?["Otros ingresos",pesos(otrosI)]:null,["Total ingresos",pesos(ingresos),"tot"],["Gastos directos","−"+pesos(dir),"neg"],["Gastos de estructura","−"+pesos(est),"neg"],["Resultado",pesos(res),res<0?"neg":"tot"]])+'<div class="mut" style="margin-top:6px">Todavía sin amortizaciones ni mano de obra familiar: las sumamos con Instalaciones y Mano de obra.</div></div>';
+  // caja mes a mes
+  var meses=[];for(var i=0;i<12;i++){var y=o+(i+4>=12?1:0),mm=(i+4)%12+1;meses.push(y+"-"+String(mm).padStart(2,"0"))}
+  var acum=0,mx=1,data=meses.map(function(k){var I=0,G=0;M.filter(function(m){return(m.ambito=="apicola"||m.ambito=="sala")&&m.unidad!="miel"&&m.fecha.slice(0,7)==k}).forEach(function(m){if(m.tipo=="ingreso")I+=m.monto||0;else G+=m.monto||0});acum+=I-G;if(I>mx)mx=I;if(G>mx)mx=G;return{k:k,I:I,G:G,ac:acum}});
+  h+='<div class="card"><b>Caja mes a mes</b><div class="mut">Solo plata que entró y salió (apícola + sala, incluye inversiones y retiros).</div><div class="leg"><span><i class="ing"></i>Entró</span><span><i class="gas"></i>Salió</span></div><div class="scroll"><table class="caja"><tr><th>Mes</th><th></th><th>Entró</th><th>Salió</th><th>Acumulado</th></tr>'+data.map(function(d){return"<tr><td>"+MESES[+d.k.slice(5,7)-1].slice(0,3)+' '+d.k.slice(2,4)+'</td><td class="cb"><i class="ing" style="width:'+(d.I/mx*100)+'%"></i><i class="gas" style="width:'+(d.G/mx*100)+'%"></i></td><td>'+(d.I?pesosK(d.I):"—")+"</td><td>"+(d.G?pesosK(d.G):"—")+'</td><td class="'+(d.ac<0?"neg":"")+'">'+pesosK(d.ac)+"</td></tr>"}).join("")+"</table></div></div>";
+  // sala
+  var sG=0,sI=0;S.forEach(function(m){if(m.tipo=="gasto")sG+=movVal(m);else if(m.tipo=="ingreso")sI+=movVal(m)});var sKg=0;S.forEach(function(m){if(m.unidad=="miel")sKg+=movKg(m)});var prop=kgProd*0.08;
+  h+='<div class="card"><b>Sala de extracción</b>'+kv([["Ingresos (8% de terceros y otros)",pesos(sI)+(sKg?" · "+fmtN(sKg)+" kg":"")],["Gastos","−"+pesos(sG),"neg"],["Resultado de la sala",pesos(sI-sG),sI-sG<0?"neg":"tot"],kgProd?["Si le cobrara el 8% a tu miel","+"+fmtN(prop)+" kg ≈ "+pesos(prop*pCl)]:null])+'<div class="mut" style="margin-top:6px">El 8% de tu miel no es plata que entra: muestra cuánto te ahorrás por tener sala propia.</div></div>';
+  $("gt-body").innerHTML=h;
+}
+function gtPer(y){
+  var M=movs.filter(function(m){return m.fecha.slice(0,4)==y}),P=M.filter(function(m){return m.ambito=="personal"});
+  var ret=M.filter(function(m){return m.ambito=="apicola"&&m.categoria=="Retiro para la casa"});
+  var I=0,G=0,Ah=0,Inu=0,cats={};P.forEach(function(m){var v=movVal(m);if(m.tipo=="ingreso")I+=v;else if(m.tipo=="otro")Ah+=v;else{G+=v;if(m.categoria=="Inusuales")Inu+=v;cats[m.categoria]=(cats[m.categoria]||0)+v}});var R=0;ret.forEach(function(m){R+=movVal(m)});var IT=I+R,Reg=G-Inu;
+  var h='<div class="kpi"><div><b>'+pesosK(IT)+'</b><span class="mut">ingresos</span></div><div><b>'+pesosK(G)+'</b><span class="mut">gastos</span></div><div><b class="'+(IT-G-Ah<0?"neg":"pos")+'">'+pesosK(IT-G-Ah)+'</b><span class="mut">te queda</span></div></div>';
+  if(IT)h+='<div class="card"><b>Regla 50 / 30 / 20</b><div class="mut">Sobre tus ingresos del año, como en tu planilla</div>'+kv([["Regulares (objetivo 50%)",pesosK(Reg)+" · "+Math.round(Reg/IT*100)+"%",Reg/IT>0.5?"neg":""],["Inusuales (objetivo 30%)",pesosK(Inu)+" · "+Math.round(Inu/IT*100)+"%",Inu/IT>0.3?"neg":""],["Ahorros (objetivo 20%)",pesosK(Ah)+" · "+Math.round(Ah/IT*100)+"%",Ah/IT<0.2?"neg":"pos"]])+"</div>";
+  var rows=Object.keys(cats).map(function(k){return{n:k,v:cats[k]}}).sort(function(a,b){return b.v-a.v});
+  h+='<div class="card"><b>Adónde va la plata</b><div class="mut">Gastos personales de '+y+"</div>"+(rows.length?barras(rows,G,function(r){return pesosK(r.v)+" · "+Math.round(r.v/G*100)+"%"}):'<div class="mut" style="margin-top:6px">Todavía no hay gastos personales cargados en '+y+".</div>")+"</div>";
+  var mx=1,acum=0,data=MESES.map(function(n,i){var k=y+"-"+String(i+1).padStart(2,"0"),a=0,g=0;P.forEach(function(m){if(m.fecha.slice(0,7)!=k)return;var v=movVal(m);if(m.tipo=="ingreso")a+=v;else g+=v});ret.forEach(function(m){if(m.fecha.slice(0,7)==k)a+=movVal(m)});acum+=a-g;if(a>mx)mx=a;if(g>mx)mx=g;return{n:n,I:a,G:g,ac:acum}});
+  h+='<div class="card"><b>Mes a mes</b><div class="mut">Los ingresos incluyen los retiros de la actividad apícola. Salió incluye ahorros.</div><div class="leg"><span><i class="ing"></i>Entró</span><span><i class="gas"></i>Salió</span></div><div class="scroll"><table class="caja"><tr><th>Mes</th><th></th><th>Entró</th><th>Salió</th><th>Acumulado</th></tr>'+data.map(function(d){return"<tr><td>"+d.n.slice(0,3)+'</td><td class="cb"><i class="ing" style="width:'+(d.I/mx*100)+'%"></i><i class="gas" style="width:'+(d.G/mx*100)+'%"></i></td><td>'+(d.I?pesosK(d.I):"—")+"</td><td>"+(d.G?pesosK(d.G):"—")+'</td><td class="'+(d.ac<0?"neg":"")+'">'+pesosK(d.ac)+"</td></tr>"}).join("")+"</table></div></div>";
+  $("gt-body").innerHTML=h;
+}
+function gInit(){
+  $("m-campo").onclick=function(){modo("campo")};$("m-gest").onclick=function(){modo("gest")};
+  ["c","m","t","p","k"].forEach(function(k){$("g-"+k).onclick=function(){gtab(k)}});
+  $("g-fec").value=hoy();$("gp-fec").value=hoy();$("gk-fec").value=hoy();
+  $("g-guardar").onclick=gGuardar;$("g-cancel").onclick=function(){gReset();$("g-msg").textContent=""};
+  ["g-monto","g-cant","g-kgv"].forEach(function(i){$(i).oninput=gVal});$("g-fec").onchange=gVal;
+  $("gm-mes").onchange=gmLista;$("gp-guardar").onclick=gpGuardar;$("gk-guardar").onclick=gkGuardar;["gk-vac","gk-rel"].forEach(function(i){$(i).oninput=gkInfo});
+  gForm();
+  var m="campo";try{m=localStorage.getItem("modo_v1")||"campo"}catch(e){}if(m=="gest")modo("gest");
+}
+
+tInit();vInit();gInit();cfgInit();aplicar();
+function sincronizar(){if(outLeer().length)flush();else if(Date.now()-ultBajada>60000)bajar();else estado()}
+window.addEventListener("online",function(){errRed=false;sincronizar()});window.addEventListener("offline",estado);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)sincronizar()});
+setInterval(sincronizar,30000);
+if(outLeer().length)flush();else bajar();estado();
+if("serviceWorker" in navigator&&location.protocol=="https:")navigator.serviceWorker.register("sw.js").catch(function(){});
+})();
+</script>
+</body>
+</html>
