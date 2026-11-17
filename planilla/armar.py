@@ -1,0 +1,266 @@
+"""Arma las hojas Campo, Cuaderno y Sala de la planilla Gestión apícola.
+Genera el pedido en JSON; se envía al código de la planilla con curl."""
+import json, os, sys
+
+def V(h): return f"«Visitas|{h}»"
+def T(h): return f"«Tambores|{h}»"
+def P(h): return f"«Precios|{h}»"
+
+VERDE, VERDE_S = "#3f6b1f", "#e3ecd8"
+MIEL, MIEL_S = "#9a6500", "#f7ebcd"
+GRIS, LINEA = "#5d6654", "#cfd5c4"
+AMAR, ROJO_S, ROJO = "#fff1c2", "#f8dedb", "#b3261e"
+FUENTE = "Roboto"
+
+C, F, CR = V("Colmenar"), V("Fecha"), V("Creado")
+N = 60  # filas para colmenares
+
+def ult(col, cond):
+    """Valor de la última visita del colmenar x que cumple cond."""
+    return f'IFERROR(INDEX(SORT(FILTER({{{col},{F},{CR}}},{C}=x,{cond}),2,FALSE,3,FALSE),1,1),"")'
+
+def por_colmenar(expr):
+    return f'=MAP($A$9:$A${8+N},LAMBDA(x,IF(x="","",{expr})))'
+
+BAJAS = ["Bajas: muertas", "Bajas: zanganeras", "Bajas: huérfanas", "Bajas: loque", "Bajas: cría yesificada", "Bajas: otra causa"]
+ALZ_M, ALZ_S = V("Alzas melarias: 1/2"), V("Alzas melarias: alzas")
+INI = "$B$2"
+
+def titulo(a1, texto, color, tam=22):
+    return {"a1": a1, "v": texto, "negrita": True, "tam": tam, "colorTexto": color}
+
+def kpis(fila, items, color_s):
+    """items: [(etiqueta, formula, formato)] en columnas A, B, C..."""
+    cel = []
+    for i, (et, fo, fmt) in enumerate(items):
+        L = chr(65 + i)
+        cel.append({"a1": f"{L}{fila}", "v": et, "tam": 9, "colorTexto": GRIS, "fondo": color_s, "ajustar": True, "valinear": "bottom"})
+        cel.append({"a1": f"{L}{fila+1}", "v": fo, "tam": 16, "negrita": True, "fondo": color_s, "formato": fmt, "alinear": "left"})
+    return cel
+
+def encab(a1, nombres, fondo, color):
+    return {"en": a1.split(":")[0], "a1": a1, "v": [nombres], "negrita": True, "fondo": fondo, "colorTexto": color, "ajustar": True, "valinear": "middle",
+            "borde": {"abajo": True, "color": color, "estilo": "SOLID_MEDIUM"}}
+
+# ---------------- CAMPO ----------------
+campo_cols = [
+    ("Colmenar", None, 190, "@"),
+    ("Colmenas", f'IFERROR(LET(r,SORT(FILTER({{{V("Colmenas")},{F},{CR}}},{C}=x,{V("Colmenas")}>0),2,FALSE,3,FALSE),lf,INDEX(r,1,2),lc,INDEX(r,1,3),INDEX(r,1,1)+IFERROR(SUM(FILTER({V("Traslado: colmenas")},{V("Traslado: destino")}=x,({F}>lf)+(({F}=lf)*({CR}>lc)))),0)),0)', 80, "0"),
+    ("Última visita", f"MAXIFS({F},{C},x)", 90, "dd/mm/yy"),
+    ("Días sin ir", f"TODAY()-MAXIFS({F},{C},x)", 70, "0"),
+    ("Alzas puestas", ult(ALZ_S, f"({ALZ_S}+{ALZ_M})>0"), 70, "0"),
+    ("½ alzas puestas", ult(ALZ_M, f"({ALZ_S}+{ALZ_M})>0"), 70, "0"),
+    ("Néctar", ult(V("Néctar"), f'{V("Néctar")}<>""'), 85, "@"),
+    ("Polen", ult(V("Polen"), f'{V("Polen")}<>""'), 85, "@"),
+    ("Última cura", f'LET(m,MAXIFS({F},{C},x,{V("Tareas")},"*Cura*"),IF(m=0,"sin registro",m))', 95, "dd/mm/yy"),
+    ("Producto", ult(V("Cura: productos"), f'ISNUMBER(SEARCH("Cura",{V("Tareas")}))'), 110, "@"),
+    ("Varroa %", ult(V("Varroa %"), f'{V("Varroa %")}<>""'), 65, "0.0"),
+    ("Enjambres a cámara", f'SUMIFS({V("Altas: enjambres a cámara")},{C},x,{F},">="&{INI})', 80, "0"),
+    ("Bajas", "+".join(f'SUMIFS({V(b)},{C},x,{F},">="&{INI})' for b in BAJAS), 60, "0"),
+    ("Última observación", ult(V("Observaciones"), f'{V("Observaciones")}<>""'), 380, "@"),
+]
+CL = [chr(65 + i) for i in range(len(campo_cols))]
+FIN = 8 + N
+cel = [
+    titulo("A1", "CAMPO", VERDE),
+    {"a1": "B1", "v": '="Campaña "&TEXT(B2,"yy")&"-"&TEXT(EDATE(B2,12),"yy")', "tam": 12, "colorTexto": GRIS, "valinear": "bottom"},
+    {"a1": "A2", "v": "Campaña desde", "colorTexto": GRIS, "tam": 9},
+    {"a1": "B2", "v": "=DATE(IF(MONTH(TODAY())>=5,YEAR(TODAY()),YEAR(TODAY())-1),5,1)", "formato": "dd/mm/yyyy", "tam": 9, "colorTexto": GRIS, "alinear": "left"},
+]
+suma6 = "+".join(f'SUMIFS({V(b)},{F},">="&{INI})' for b in BAJAS)
+cel += kpis(4, [
+    ("Colmenas hoy", f"=SUM(B9:B{FIN})", "0"),
+    ("Colmenares", f'=COUNTIF(A9:A{FIN},"?*")', "0"),
+    ("Enjambres a cámara", f'=SUMIFS({V("Altas: enjambres a cámara")},{F},">="&{INI})', "0"),
+    ("Bajas", "=" + suma6, "0"),
+    ("Núcleos armados", f'=SUMIFS({V("Multiplicación: núcleos")},{F},">="&{INI})', "0"),
+    ("Colmenas trasladadas", f'=SUMIFS({V("Traslado: colmenas")},{F},">="&{INI})', "0"),
+    ("Alzas puestas", f"=SUM(E9:E{FIN})", "0"),
+    ("½ alzas puestas", f"=SUM(F9:F{FIN})", "0"),
+    ("Jarabe (L)", f'=SUMIFS({V("Jarabe (L)")},{F},">="&{INI})', "#,##0"),
+    ("Torta (kg)", f'=SUMIFS({V("Torta (kg)")},{F},">="&{INI})', "#,##0"),
+    ("Curas", f'=COUNTIFS({V("Tareas")},"*Cura*",{F},">="&{INI})', "0"),
+], VERDE_S)
+cel.append(titulo("A7", "ESTADO DE CADA COLMENAR", VERDE, 12))
+cel.append(encab(f"A8:{CL[-1]}8", [c[0] for c in campo_cols], VERDE_S, VERDE))
+cel.append({"a1": "A9", "v": f'=LET(c,{C},f,{F},u,UNIQUE(FILTER(c,c<>"")),SORT(u,MAP(u,LAMBDA(x,MAXIFS(f,c,x))),FALSE))', "negrita": True})
+for i, (nom, expr, ancho, fmt) in enumerate(campo_cols):
+    if expr:
+        cel.append({"a1": f"{CL[i]}9", "v": por_colmenar(expr)})
+    cel.append({"a1": f"{CL[i]}9:{CL[i]}{FIN}", "formato": fmt, "valinear": "top"})
+cel.append({"a1": f"N9:N{FIN}", "ajustar": True})
+cel.append({"a1": f"B9:M{FIN}", "alinear": "center"})
+cel.append({"a1": f"A9:{CL[-1]}{FIN}", "borde": {"medio": True, "abajo": True, "color": "#e3e7dc"}})
+
+campo = {
+    "hoja": "Campo", "limpiar": True, "posicion": 1, "color": VERDE, "sinCuadricula": True, "fuente": FUENTE,
+    "filas": FIN + 5, "columnas": len(campo_cols),
+    "anchos": {CL[i]: c[2] for i, c in enumerate(campo_cols)},
+    "altos": {"1": 36, "4": 30, "5": 32, "8": 40},
+    "celdas": cel, "congelarFilas": 8, "congelarColumnas": 1,
+    "condicionales": [
+        {"a1": f"D9:D{FIN}", "formula": '=AND($A9<>"",$D9>=10)', "fondo": ROJO_S, "colorTexto": ROJO},
+        {"a1": f"D9:D{FIN}", "formula": '=AND($A9<>"",$D9>=4)', "fondo": AMAR},
+        {"a1": f"K9:K{FIN}", "formula": '=AND(ISNUMBER($K9),$K9>=3)', "fondo": ROJO_S, "colorTexto": ROJO, "negrita": True},
+        {"a1": f"I9:I{FIN}", "formula": '=$I9="sin registro"', "colorTexto": "#9aa18f"},
+        {"a1": f"M9:M{FIN}", "formula": '=AND(ISNUMBER($M9),$M9>0)', "colorTexto": ROJO, "negrita": True},
+    ],
+}
+
+# ---------------- CUADERNO ----------------
+def si(cond, txt): return f'IF({cond},{txt},"")'
+partes = [
+    V("Tareas"),
+    si(f'{V("Altas: enjambres a cámara")}>0', f'" · +"&{V("Altas: enjambres a cámara")}&" enjambres a cámara"'),
+    si(f'{V("Altas: núcleos a cámara")}>0', f'" · +"&{V("Altas: núcleos a cámara")}&" núcleos a cámara"'),
+    si(f'{V("Altas: compradas")}>0', f'" · +"&{V("Altas: compradas")}&" compradas"'),
+    si("(" + "+".join(V(b) for b in BAJAS) + ")>0", '" · −"&(' + "+".join(V(b) for b in BAJAS) + ')&" bajas"'),
+    si(f'{V("Traslado: colmenas")}>0', f'" · "&{V("Traslado: colmenas")}&" colmenas llevadas a "&{V("Traslado: destino")}'),
+    si(f'{V("Multiplicación: núcleos")}>0', f'" · "&{V("Multiplicación: núcleos")}&" núcleos armados"'),
+    si(f'{V("Jarabe (L)")}>0', f'" · jarabe "&{V("Jarabe (L)")}&" L"'),
+    si(f'{V("Torta (kg)")}>0', f'" · torta "&{V("Torta (kg)")}&" kg"'),
+    si(f'{V("Néctar")}<>""', f'" · néctar "&LOWER({V("Néctar")})'),
+    si(f'{V("Polen")}<>""', f'" · polen "&LOWER({V("Polen")})'),
+    si(f'{V("Cura: productos")}<>""', f'" · cura: "&{V("Cura: productos")}'),
+    si(f'{V("Varroa %")}<>""', f'" · varroa "&{V("Varroa %")}&"%"'),
+    si(f'{ALZ_S}>0', f'" · "&{ALZ_S}&" alzas puestas"'),
+    si(f'{ALZ_M}>0', f'" · "&{ALZ_M}&" ½ alzas puestas"'),
+    si(f'({V("Cosecha: alzas")}+{V("Cosecha: 1/2 alzas")})>0', f'" · cosecha "&{V("Cosecha: alzas")}&" alzas y "&{V("Cosecha: 1/2 alzas")}&" ½"'),
+]
+QUE = 'REGEXREPLACE(' + "&".join(partes) + ',"^ · ","")'
+cuaderno = {
+    "hoja": "Cuaderno", "limpiar": True, "posicion": 2, "color": VERDE, "sinCuadricula": True, "fuente": FUENTE,
+    "filas": 1000, "columnas": 5,
+    "anchos": {"A": 80, "B": 180, "C": 75, "D": 360, "E": 380},
+    "altos": {"1": 36},
+    "celdas": [
+        titulo("A1", "CUADERNO DE VISITAS", VERDE),
+        {"a1": "A2", "v": "Las más nuevas arriba. Para ver un solo colmenar, usá el filtro (el ícono de la fila 3, en Colmenar).", "colorTexto": GRIS, "tam": 9},
+        encab("A3:E3", ["Fecha", "Colmenar", "Colmenas", "Qué se hizo", "Observaciones"], VERDE_S, VERDE),
+        {"a1": "A4", "v": f'=ARRAYFORMULA(IFERROR(CHOOSECOLS(SORT(FILTER({{{F},{C},{V("Colmenas")},{QUE},{V("Observaciones")},{CR}}},{C}<>""),1,FALSE,6,FALSE),1,2,3,4,5),""))'},
+        {"a1": "A4:A1000", "formato": "dd/mm/yy", "valinear": "top"},
+        {"a1": "B4:E1000", "valinear": "top"},
+        {"a1": "C4:C1000", "alinear": "center"},
+        {"a1": "D4:E1000", "ajustar": True},
+        {"a1": "A4:E1000", "borde": {"medio": True, "abajo": True, "color": "#e3e7dc"}},
+    ],
+    "congelarFilas": 3, "filtro": "A3:E1000",
+}
+
+# ---------------- SALA ----------------
+TA, TP, TD, TK, TT, TL = T("Campaña (año de inicio)"), T("Productor"), T("Destino / estado"), T("Neto (kg)"), T("Tipo"), T("Color")
+KG = f'IF({TK}<>"",{TK},IF({TT}="Petizo",300,340))'
+MM = f'IFERROR(VALUE(REGEXEXTRACT(TO_TEXT({TL}),"[0-9]+")),0)'
+PROPIO = f'({TA}=$B$2)*({TP}="Propio")'
+OSC, CLA = f"({MM}>50)", f"({MM}<=50)"
+def sp(*f): return "=ARRAYFORMULA(SUMPRODUCT(" + "*".join(f) + "))"
+PCL = f'IFERROR(INDEX(SORT(FILTER({{{P("Clara ($/kg)")},{P("Fecha")}}},{P("Comprador")}<>""),2,FALSE),1,1),0)'
+POS = f'IFERROR(INDEX(SORT(FILTER({{{P("Oscura ($/kg)")},{P("Fecha")}}},{P("Comprador")}<>""),2,FALSE),1,1),0)'
+
+sala = [
+    titulo("A1", "SALA", MIEL),
+    {"a1": "B1", "v": '="Campaña "&RIGHT(B2,2)&"-"&RIGHT(B2+1,2)', "tam": 12, "colorTexto": GRIS, "valinear": "bottom"},
+    {"a1": "A2", "v": "Campaña (año de inicio)", "colorTexto": GRIS, "tam": 9},
+    {"a1": "B2", "v": "=IF(MONTH(TODAY())>=5,YEAR(TODAY()),YEAR(TODAY())-1)", "tam": 9, "colorTexto": GRIS, "alinear": "left", "formato": "0"},
+]
+sala += kpis(4, [
+    ("Tambores propios", f'=COUNTIFS({TA},$B$2,{TP},"Propio")', "0"),
+    ("Kg de miel", sp(PROPIO, KG), "#,##0"),
+    ("Sin pesar (se cuentan 340/300 kg)", f'=COUNTIFS({TA},$B$2,{TP},"Propio",{TK},"")', "0"),
+    ("Kg por colmena", "=IFERROR(B5/Campo!A5,0)", "0.0"),
+    ("Clara (kg)", sp(PROPIO, CLA, KG), "#,##0"),
+    ("Oscura (kg)", sp(PROPIO, OSC, KG), "#,##0"),
+    ("Tambores de terceros", f'=COUNTIFS({TA},$B$2,{TP},"<>Propio",{TP},"<>")', "0"),
+], MIEL_S)
+
+# Balance de miel por destino
+sala.append(titulo("A7", "BALANCE DE MIEL (TAMBORES PROPIOS)", MIEL, 12))
+sala.append(encab("A8:E8", ["", "Clara (kg)", "Oscura (kg)", "Total (kg)", "Valor ($)"], MIEL_S, MIEL))
+dests = ["En sala", "Cargado a Villamora", "Envasado", "Canje", "Vendido", "Otro"]
+filas = [["Producida", sp(PROPIO, CLA, KG), sp(PROPIO, OSC, KG), "=B9+C9", "=B9*$B$17+C9*$C$17"]]
+for i, d in enumerate(dests):
+    r = 10 + i
+    filas.append([d, sp(PROPIO, f'({TD}="{d}")', CLA, KG), sp(PROPIO, f'({TD}="{d}")', OSC, KG), f"=B{r}+C{r}", f"=B{r}*$B$17+C{r}*$C$17"])
+sala.append({"en": "A9", "v": filas})
+sala += [
+    {"a1": "A9:A15", "negrita": False}, {"a1": "A9:E9", "negrita": True, "borde": {"abajo": True, "color": LINEA}},
+    {"a1": "B9:D15", "formato": "#,##0;-#,##0;—"}, {"a1": "E9:E15", "formato": "$ #,##0;-$ #,##0;—"},
+    {"a1": "A10:A15", "colorTexto": GRIS},
+    {"a1": "A17", "v": "Precio por kg (último de Villamora)", "colorTexto": GRIS, "tam": 9},
+    {"a1": "B17", "v": "=" + PCL, "formato": "$ #,##0", "tam": 9, "colorTexto": GRIS},
+    {"a1": "C17", "v": "=" + POS, "formato": "$ #,##0", "tam": 9, "colorTexto": GRIS},
+]
+
+# Tambores
+TR = 20
+sala.append(titulo(f"A{TR}", "TAMBORES DE LA CAMPAÑA", MIEL, 12))
+tcols = ["N°", "Etiqueta", "Colmenar", "Lote", "Tipo", "Neto (kg)", "Color", "Productor", "Destino", "Observaciones"]
+sala.append(encab(f"A{TR+1}:J{TR+1}", tcols, MIEL_S, MIEL))
+sala.append({"a1": f"A{TR+2}", "v": f'=ARRAYFORMULA(IFERROR(SORT(FILTER({{{T("N° de llenado")},{T("Etiqueta")},{T("Colmenar")},{T("Lote de extracción")},{TT},IF({TK}<>"",{TK},"≈ "&IF({TT}="Petizo",300,340)),{TL},IF({TP}="Propio","Mío",{TP}),{TD},{T("Observaciones")}}},{TA}=$B$2),1,FALSE),"Todavía no hay tambores cargados en esta campaña. Se cargan en la app: Campo → Tambores."))'})
+sala += [
+    {"a1": f"A{TR+2}:J1000", "valinear": "top", "borde": {"medio": True, "abajo": True, "color": "#ece6d6"}},
+    {"a1": f"A{TR+2}:A1000", "alinear": "center"}, {"a1": f"D{TR+2}:F1000", "alinear": "center"},
+    {"a1": f"J{TR+2}:J1000", "ajustar": True},
+]
+
+# Lotes, a la derecha
+LC = "L"
+sala.append(titulo(f"L{TR}", "LOTES DE EXTRACCIÓN", MIEL, 12))
+sala.append(encab(f"L{TR+1}:S{TR+1}", ["Lote", "Fecha", "Colmenar", "Alzas", "½ alzas", "Estimado (kg)", "Tambores", "Real (kg)"], MIEL_S, MIEL))
+CS, CM, CP, LO = V("Cosecha: alzas"), V("Cosecha: 1/2 alzas"), V("Cosecha: llenado %"), V("Lote de extracción")
+PP = f"IF({CP}>0,{CP},100)/100"
+sala.append({"a1": f"L{TR+2}", "v": f'=ARRAYFORMULA(IFERROR(SORT(FILTER({{TO_TEXT({LO}),{F},{C},{CS},{CM},ROUND(({CS}*19+{CM}*11)*{PP})&"–"&ROUND(({CS}*25+{CM}*13)*{PP})}},{LO}<>"",{F}>=DATE($B$2,5,1),{F}<DATE($B$2+1,5,1)),2,FALSE),"Sin cosechas cargadas en esta campaña"))'})
+LR = f"$L${TR+2}:$L${TR+60}"
+TLO = T("Lote de extracción")
+sala.append({"a1": f"R{TR+2}", "v": f'=MAP({LR},LAMBDA(l,IF(OR(l="",LEFT(l,3)="Sin"),"",IFERROR(TEXTJOIN(", ",TRUE,FILTER("N° "&{T("N° de llenado")},TO_TEXT({TLO})=l,{TA}=$B$2)),"—"))))'})
+sala.append({"a1": f"S{TR+2}", "v": f'=MAP({LR},LAMBDA(l,IF(OR(l="",LEFT(l,3)="Sin"),"",ARRAYFORMULA(SUMPRODUCT((TO_TEXT({TLO})=l)*({TA}=$B$2)*{KG})))))'})
+sala += [
+    {"a1": f"M{TR+2}:M{TR+60}", "formato": "dd/mm/yy"}, {"a1": f"S{TR+2}:S{TR+60}", "formato": "#,##0;-#,##0;—"},
+    {"a1": f"L{TR+2}:S{TR+60}", "valinear": "top", "borde": {"medio": True, "abajo": True, "color": "#ece6d6"}},
+    {"a1": f"L{TR+2}:L{TR+60}", "alinear": "center"}, {"a1": f"O{TR+2}:Q{TR+60}", "alinear": "center"},
+]
+sala_spec = {
+    "hoja": "Sala", "limpiar": True, "posicion": 3, "color": MIEL, "sinCuadricula": True, "fuente": FUENTE,
+    "filas": 1000, "columnas": 19,
+    "anchos": {"A": 150, "B": 95, "C": 170, "D": 80, "E": 95, "F": 85, "G": 100, "H": 90, "I": 140, "J": 220, "K": 30,
+               "L": 55, "M": 75, "N": 170, "O": 60, "P": 60, "Q": 100, "R": 120, "S": 80},
+    "altos": {"1": 36, "4": 30, "5": 32},
+    "celdas": sala, "congelarFilas": 2,
+    "condicionales": [
+        {"a1": f"F{TR+2}:F1000", "formula": f'=LEFT(TO_TEXT($F{TR+2}),1)="≈"', "fondo": AMAR},
+    ],
+}
+
+
+def local(f):
+    """Pasa una fórmula escrita con comas al formato de la planilla (Argentina): ; entre argumentos y \\ entre columnas de {}."""
+    if not isinstance(f, str) or not f.startswith("="):
+        return f
+    out, pila, en_txt, en_ph = [], [], False, False
+    for ch in f:
+        if en_txt:
+            out.append(ch); en_txt = ch != '"'; continue
+        if en_ph:
+            out.append(ch); en_ph = ch != "»"; continue
+        if ch == '"': en_txt = True
+        elif ch == "«": en_ph = True
+        elif ch in "({": pila.append(ch)
+        elif ch in ")}": pila and pila.pop()
+        elif ch == ",":
+            ch = "\\" if pila and pila[-1] == "{" else ";"
+        out.append(ch)
+    return "".join(out)
+
+def localizar(spec):
+    for c in spec.get("celdas", []):
+        if "v" in c:
+            if isinstance(c["v"], list): c["v"] = [[local(x) for x in fila] for fila in c["v"]]
+            else: c["v"] = local(c["v"])
+    for k in spec.get("condicionales", []): k["formula"] = local(k["formula"])
+    return spec
+
+for _s in (campo, cuaderno, sala_spec): localizar(_s)
+pedido = {"clave": os.environ["CLAVE"], "armar": [campo, cuaderno, sala_spec],
+          "mirar": [{"hoja": "Campo", "a1": "A1:N16"}, {"hoja": "Cuaderno", "a1": "A3:E8"}, {"hoja": "Sala", "a1": "A1:J24"}, {"hoja": "Sala", "a1": "L20:S24"}]}
+json.dump(pedido, open(sys.argv[1], "w"), ensure_ascii=False)
+print("ok", len(json.dumps(pedido)))
