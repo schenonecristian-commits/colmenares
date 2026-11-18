@@ -156,7 +156,11 @@ table.caja td.cb{width:28%;min-width:70px}table.caja td.cb i{display:block;heigh
 <input id="colm" type="number" inputmode="numeric" min="0" placeholder="Cantidad de colmenas">
 <details id="d-cat"><summary>Categoría (aproximada)</summary><div class="mut" style="margin-top:6px">I: más de 7 cuadros de abejas · II: de 5 a 7 · III: menos de 5</div><div class="row"><div><label>I · Fuertes</label><input id="cat1" type="number" inputmode="numeric" min="0"></div><div><label>II · Medias</label><input id="cat2" type="number" inputmode="numeric" min="0"></div><div><label>III · Débiles</label><input id="cat3" type="number" inputmode="numeric" min="0"></div></div><div class="mut" id="catsum" style="margin-top:6px"></div></details>
 <h3>Alzas melarias puestas</h3>
-<div class="row"><div><label>1/2 alza</label><input id="q_m" type="number" inputmode="numeric" min="0"></div><div><label>Alza</label><input id="q_s" type="number" inputmode="numeric" min="0"></div></div>
+<div class="mut" id="alz-prev"></div>
+<div class="row"><div><label>Puse ½ alzas</label><input id="p_m" type="number" inputmode="numeric" min="0" placeholder="0"></div><div><label>Puse alzas</label><input id="p_s" type="number" inputmode="numeric" min="0" placeholder="0"></div></div>
+<div id="p-box" hidden><label>¿De dónde salieron?</label><div class="chips" id="p-orig"></div><div class="mut" id="p-gal" style="margin-top:4px"></div></div>
+<div id="alz-tot" style="font-size:16px;font-weight:600;margin-top:8px"></div><div class="mut" id="alz-det"></div>
+<details id="d-alz"><summary>Corregir total puesto (si las contaste)</summary><div class="row" style="margin-top:6px"><div><label>Total ½ alzas puestas</label><input id="q_m" type="number" inputmode="numeric" min="0"></div><div><label>Total alzas puestas</label><input id="q_s" type="number" inputmode="numeric" min="0"></div></div></details>
 </div>
 <h3 id="mat-h">Material apilado</h3>
 <div class="mut">Dejá vacío lo que no contaste. Poné 0 si no queda nada.</div>
@@ -279,6 +283,31 @@ var G_PUESTAS=["q_m","q_s"],G_APILADO=["a_n","a_c","a_m","a_s"];
 /* Si cargaste algo del grupo, lo vacío cuenta como 0; si dejaste todo vacío, no lo contaste (null) */
 function grupo(ids){var algo=ids.some(function(i){return $(i).value.trim()!==""}),o={};ids.forEach(function(i){o[i]=algo?num(i):null});return o}
 function contado(){var a=arguments;for(var i=0;i<a.length;i++)if(a[i]!=null)return true;return false}
+var pOrig="galpon";
+function antesDe(v,ed){return ed&&(v.id==ed.id||despues(v,ed))}
+function ultimo(pred){var c=$("col").value.trim().toLowerCase(),f=$("fec").value||hoy(),ed=vedit?visitas.filter(function(x){return x.id==vedit})[0]:null,b=null;
+  visitas.forEach(function(v){if(v.colmenar.trim().toLowerCase()!=c||v.fecha>f||antesDe(v,ed)||!pred(v))return;if(!b||despues(v,b))b=v});return b}
+function alzPrev(){return ultimo(function(v){return contado(v.quedan_m,v.quedan_s)})}
+function apPrev(){return ultimo(function(v){return contado(v.apilado_n,v.apilado_c,v.apilado_m,v.apilado_s)})}
+function cosHoy(){var c=tareas.indexOf("Cosecha")>=0;return{m:c?num("c_m"):0,s:c?num("c_s"):0}}
+function alzCalc(){var p=alzPrev(),k=cosHoy(),pm=num("p_m"),ps=num("p_s");
+  if(p)return{m:Math.max(0,(p.quedan_m||0)-k.m+pm),s:Math.max(0,(p.quedan_s||0)-k.s+ps),prev:p};
+  if(pm||ps)return{m:pm,s:ps,prev:null};return null}
+/* Stock del galpón: último conteo + alzas cosechadas después − alzas que salieron del galpón después */
+function galStock(){var g=null;visitas.forEach(function(v){if(esGalpon(v.colmenar)&&contado(v.apilado_m,v.apilado_s)&&(!g||despues(v,g)))g=v});if(!g)return null;
+  var m=g.apilado_m||0,s=g.apilado_s||0;visitas.forEach(function(v){if(v.id==vedit||esGalpon(v.colmenar)||!despues(v,g))return;m+=(v.cosecha_m||0);s+=(v.cosecha_s||0);if(v.puse_origen=="galpon"){m-=(v.puse_m||0);s-=(v.puse_s||0)}});return{m:m,s:s,fecha:g.fecha}}
+function alzShow(){
+  var p=alzPrev(),k=cosHoy(),pm=num("p_m"),ps=num("p_s"),r=alzCalc();
+  $("alz-prev").textContent=p?"Había "+(p.quedan_s||0)+" alzas y "+(p.quedan_m||0)+" ½ alzas puestas (visita del "+fmt(p.fecha)+")":"Sin conteo anterior de alzas puestas en este colmenar";
+  var det=[];if(k.s||k.m)det.push("−"+k.s+" alzas y −"+k.m+" ½ cosechadas hoy");if(ps||pm)det.push("+"+ps+" alzas y +"+pm+" ½ puestas hoy");
+  var corr=$("q_m").value.trim()!==""||$("q_s").value.trim()!=="";
+  $("alz-tot").textContent=corr?"Total corregido: "+num("q_s")+" alzas · "+num("q_m")+" ½ alzas":r?"Quedan puestas: "+r.s+" alzas · "+r.m+" ½ alzas":"";
+  $("alz-det").textContent=corr?"":det.join(" · ");
+  $("q_s").placeholder=r?String(r.s):"";$("q_m").placeholder=r?String(r.m):"";
+  $("p-box").hidden=!(pm||ps);
+  chipsIn("p-orig",[["galpon","Del galpón / sala"],["apilado","Del apilado de este colmenar"]],pOrig,function(v){pOrig=v;alzShow()});
+  var t="";if(pm||ps){if(pOrig=="galpon"){var g=galStock();t=g?"En el galpón quedarían ≈ "+(g.s-ps)+" alzas y "+(g.m-pm)+" ½ alzas":"El galpón todavía no tiene conteo: cargá una visita a «Galpón» para llevar su stock."}else{var a=apPrev();t=a?"Apilado en el colmenar: "+(a.apilado_s||0)+" → "+Math.max(0,(a.apilado_s||0)-ps)+" alzas · "+(a.apilado_m||0)+" → "+Math.max(0,(a.apilado_m||0)-pm)+" ½ alzas":"Este colmenar no tiene conteo de material apilado."}}
+  $("p-gal").textContent=t}
 function galpShow(){var g=esGalpon($("col").value);$("no-galp").hidden=g;$("galp-info").hidden=!g;$("mat-h").textContent=g?"Material en el galpón":"Material apilado"}
 function numf(i){var v=parseFloat(String($(i).value).replace(",","."));return isNaN(v)?0:v}
 
@@ -298,7 +327,7 @@ function chips(){
   detalle();
 }
 function tarTxt(v){var ts=v.tareas||[];return ts.filter(function(x){return!esSub(x)}).map(function(x){var sb=(SUB[x]||[]).filter(function(y){return ts.indexOf(y)>=0});return x+(sb.length?" ("+sb.join(", ")+")":"")}).concat(ts.filter(function(x){return esSub(x)&&!Object.keys(SUB).some(function(k){return ts.indexOf(k)>=0&&SUB[k].indexOf(x)>=0})})).join(", ")}
-function detalle(){$("d-ali").hidden=tareas.indexOf("Alimentación")<0;$("d-cur").hidden=tareas.indexOf("Cura")<0;$("d-cos").hidden=tareas.indexOf("Cosecha")<0;$("d-tra").hidden=tareas.indexOf("Traslado")<0;$("d-mul").hidden=tareas.indexOf("Multiplicación")<0;$("d-var").hidden=tareas.indexOf("Monitoreo varroa")<0;curChips()}
+function detalle(){setTimeout(alzShow,0);$("d-ali").hidden=tareas.indexOf("Alimentación")<0;$("d-cur").hidden=tareas.indexOf("Cura")<0;$("d-cos").hidden=tareas.indexOf("Cosecha")<0;$("d-tra").hidden=tareas.indexOf("Traslado")<0;$("d-mul").hidden=tareas.indexOf("Multiplicación")<0;$("d-var").hidden=tareas.indexOf("Monitoreo varroa")<0;curChips()}
 function curChips(){var c=$("cur");c.innerHTML="";PROD.forEach(function(n){var b=document.createElement("button");b.className="chip"+(cura.indexOf(n)>=0?" on":"");b.textContent=n;b.onclick=function(){var i=cura.indexOf(n);if(i>=0)cura.splice(i,1);else cura.push(n);curChips()};c.appendChild(b)})}
 $("col").oninput=function(){destinos();colShow();galpShow()};$("c_s").oninput=kgShow;$("c_m").oninput=kgShow;$("c_p").oninput=kgShow;Array.prototype.forEach.call(document.querySelectorAll("#pchips .chip"),function(b){b.onclick=function(){$("c_p").value=b.getAttribute("data-p");kgShow()}});$("dest").onchange=function(){$("dest2").hidden=$("dest").value!="__otro"};
 $("fec").value=hoy();estacion=estDe(hoy());chips();
@@ -346,22 +375,24 @@ function colShow(){var r=colAct($("col").value,$("fec").value||hoy(),vedit),s=co
 function loteNext(){var o=campDe($("fec").value||hoy()),mx=0;visitas.forEach(function(v){if(v.id!=vedit&&v.lote&&campDe(v.fecha)==o){var n=parseInt(v.lote,10);if(n>mx)mx=n}});return mx+1}
 function loteShow(){$("c_lote").placeholder="Se asigna solo: "+loteNext()}
 function lotesList(){var o=+$("tcamp").value||campHoy(),d=$("lotes");if(!d)return;d.innerHTML="";visitas.filter(function(v){return v.lote&&campDe(v.fecha)==o}).forEach(function(v){var e=document.createElement("option");e.value=v.lote;e.textContent=v.colmenar+" · "+fmt(v.fecha);d.appendChild(e)})}
-var VIN=["colm","q_m","q_s","a_m","a_s","a_n","a_c","c_m","c_s","c_p","c_lote","obs","jar","tor","curd","curl","trac","tran","muln","mulc","mulcr","mulrf","mulrv","dest2","b_mu","b_za","b_hu","b_lo","b_cy","b_ot","al_nu","al_en","al_in","trae","cat1","cat2","cat3"];
+var VIN=["colm","p_m","p_s","q_m","q_s","a_m","a_s","a_n","a_c","c_m","c_s","c_p","c_lote","obs","jar","tor","curd","curl","trac","tran","muln","mulc","mulcr","mulrf","mulrv","dest2","b_mu","b_za","b_hu","b_lo","b_cy","b_ot","al_nu","al_en","al_in","trae","cat1","cat2","cat3"];
 function vReset(){
-  VIN.forEach(function(i){$(i).value=""});$("dest").value="";$("dest2").hidden=true;cura=[];tareas=[];promo=0;natN="";natP="";vmues=[{a:0,v:0},{a:0,v:0},{a:0,v:0}];vedit=null;
+  VIN.forEach(function(i){$(i).value=""});$("dest").value="";$("dest2").hidden=true;cura=[];tareas=[];promo=0;natN="";natP="";vmues=[{a:0,v:0},{a:0,v:0},{a:0,v:0}];vedit=null;pOrig="galpon";$("d-alz").open=false;
   $("vform").hidden=true;$("vcancel").hidden=true;$("guardar").textContent="Guardar visita";$("d-ab").open=false;$("d-cat").open=false;
   chips();vRows();kgShow();colShow();loteShow();galpShow();
 }
 function guardar(){
   var col=$("col").value.trim(),f=$("fec").value,m=$("msg");m.className="msg";
   if(!col||!f){m.className="msg err";m.textContent="Falta el colmenar o la fecha";return}
-  var gal=esGalpon(col);if(gal)tareas=[];var GP=grupo(G_PUESTAS),GA=grupo(G_APILADO);
+  var gal=esGalpon(col);if(gal)tareas=[];var GP=grupo(G_PUESTAS),GA=grupo(G_APILADO),AC=alzCalc(),pm=num("p_m"),ps=num("p_s");
+  if(GP.q_m==null&&AC){GP={q_m:AC.m,q_s:AC.s}}
+  if(GA.a_n==null&&(pm||ps)&&pOrig=="apilado"){var ap=apPrev();if(ap)GA={a_n:ap.apilado_n,a_c:ap.apilado_c,a_m:Math.max(0,(ap.apilado_m||0)-pm),a_s:Math.max(0,(ap.apilado_s||0)-ps)}}
   var T=function(t){return tareas.indexOf(t)>=0},cs=T("Cosecha"),hayCos=cs&&(num("c_m")||num("c_s")),sug=colSug();
   var old=vedit?visitas.filter(function(x){return x.id==vedit})[0]:null;
   var v={id:vedit||"v"+Date.now(),creado:old&&old.creado||Date.now(),colmenar:col,fecha:f,estacion:estDe(f),tareas:tareas.slice(),
     colmenas:gal?0:($("colm").value.trim()===""?(sug||0):num("colm")),
     bajas:{muertas:num("b_mu"),zanganeras:num("b_za"),huerfanas:num("b_hu"),loque:num("b_lo"),yeso:num("b_cy"),otra:num("b_ot")},altas_nuc:num("al_nu"),altas_enj:num("al_en"),altas_ing:num("al_in"),cat1:num("cat1"),cat2:num("cat2"),cat3:num("cat3"),
-    quedan_m:gal?null:GP.q_m,quedan_s:gal?null:GP.q_s,apilado_m:GA.a_m,apilado_s:GA.a_s,apilado_n:GA.a_n,apilado_c:GA.a_c,
+    quedan_m:gal?null:GP.q_m,quedan_s:gal?null:GP.q_s,puse_m:gal||!pm?null:pm,puse_s:gal||!ps?null:ps,puse_origen:gal||!(pm||ps)?"":pOrig,apilado_m:GA.a_m,apilado_s:GA.a_s,apilado_n:GA.a_n,apilado_c:GA.a_c,
     cosecha_m:cs?num("c_m"):0,cosecha_s:cs?num("c_s"):0,cosecha_p:cs?(num("c_p")||100):100,lote:cs?($("c_lote").value.trim()||(hayCos?String(loteNext()):"")):"",
     obs:$("obs").value.trim(),jarabe:T("Alimentación")?numf("jar"):0,promotor:T("Alimentación")&&promo>0,promotor_ml:T("Alimentación")?promo:0,nectar:T("Alimentación")?natN:"",polen:T("Alimentación")?natP:"",torta:T("Alimentación")?numf("tor"):0,
     cura:T("Cura")?cura.slice():[],cura_det:T("Cura")?$("curd").value.trim():"",cura_lote:T("Cura")?$("curl").value.trim():"",
@@ -381,6 +412,8 @@ function cargar(id){
   var b=v.bajas||{};
   [["colm",v.colmenas],["c_m",v.cosecha_m],["c_s",v.cosecha_s],["c_p",v.cosecha_p&&v.cosecha_p<100?v.cosecha_p:0],["c_lote",v.lote],["obs",v.obs],["jar",v.jarabe],["tor",v.torta],["curd",v.cura_det],["curl",v.cura_lote],["trac",v.tras_col],["tran",v.tras_nuc],["muln",v.mult_nuc],["mulc",v.mult_can],["mulcr",v.mult_cel],["mulrf",v.mult_rf],["mulrv",v.mult_rv],["b_mu",b.muertas],["b_za",b.zanganeras],["b_hu",b.huerfanas],["b_lo",b.loque],["b_cy",b.yeso],["b_ot",b.otra],["al_nu",v.altas_nuc],["al_en",v.altas_enj],["al_in",v.altas_ing],["trae",v.tras_enj],["cat1",v.cat1],["cat2",v.cat2],["cat3",v.cat3]].forEach(function(x){sv(x[0],x[1])});
   [["q_m",v.quedan_m],["q_s",v.quedan_s],["a_m",v.apilado_m],["a_s",v.apilado_s],["a_n",v.apilado_n],["a_c",v.apilado_c]].forEach(function(x){$(x[0]).value=x[1]==null?"":String(x[1])});galpShow();
+  $("p_m").value=v.puse_m||"";$("p_s").value=v.puse_s||"";pOrig=v.puse_origen||"galpon";
+  setTimeout(function(){var r=alzCalc();if(r&&r.m===v.quedan_m&&r.s===v.quedan_s){$("q_m").value="";$("q_s").value=""}$("d-alz").open=$("q_m").value!==""||$("q_s").value!=="";alzShow()},0);
   destinos();if(v.destino){$("dest").value=v.destino;if($("dest").selectedIndex<0||$("dest").value!=v.destino){$("dest").value="__otro";$("dest2").value=v.destino}}$("dest2").hidden=$("dest").value!="__otro";
   vmues=v.varroa&&v.varroa.length?v.varroa.map(function(x){return{a:x.a,v:x.v}}):[{a:0,v:0},{a:0,v:0},{a:0,v:0}];
   $("d-ab").open=bTot(b)+(v.altas_nuc||0)+(v.altas_enj||0)+(v.altas_ing||0)>0;$("d-cat").open=(v.cat1||0)+(v.cat2||0)+(v.cat3||0)>0;
@@ -391,6 +424,7 @@ function vInit(){
   vmues=[{a:0,v:0},{a:0,v:0},{a:0,v:0}];vRows();
   [3,5].forEach(function(n){$("prom"+n).onclick=function(){promo=promo==n?0:n;chips()}});
   $("vadd").onclick=function(){vmues.push({a:0,v:0});vRows()};
+  ["p_m","p_s","q_m","q_s","c_m","c_s","col"].forEach(function(i){$(i).addEventListener("input",alzShow)});$("fec").addEventListener("change",alzShow);
   $("vcancel").onclick=function(){vReset();$("msg").textContent=""};
   ["b_mu","b_za","b_hu","b_lo","b_cy","b_ot","al_nu","al_en","al_in","trac","colm","cat1","cat2","cat3"].forEach(function(i){$(i).addEventListener("input",colShow)});
   $("fec").addEventListener("change",function(){colShow();loteShow()});
@@ -416,7 +450,7 @@ function lista(){
     if(v.altas_nuc||v.altas_enj||v.altas_ing){var ad=[];if(v.altas_nuc)ad.push(v.altas_nuc+" núcleos pasados a cámara");if(v.altas_enj)ad.push(v.altas_enj+" enjambres pasados a cámara");if(v.altas_ing)ad.push(v.altas_ing+" ingresadas");d.push("Altas: "+ad.join(" · "))}
     if(v.cat1||v.cat2||v.cat3)d.push("Categoría I "+(v.cat1||0)+" · II "+(v.cat2||0)+" · III "+(v.cat3||0));
     if(v.varroa_pct!=null)d.push("Varroa "+v.varroa_pct.toFixed(1)+"% ("+(v.varroa||[]).length+" muestras)");
-    if(v.quedan_m||v.quedan_s)d.push("Alzas melarias: 1/2 "+v.quedan_m+" · Alza "+v.quedan_s);
+    if(v.puse_m||v.puse_s)d.push("Puse "+(v.puse_s||0)+" alzas y "+(v.puse_m||0)+" ½ ("+(v.puse_origen=="apilado"?"del apilado":"del galpón")+")");if(contado(v.quedan_m,v.quedan_s))d.push("Alzas puestas: "+(v.quedan_s||0)+" · ½ alzas "+(v.quedan_m||0));
     if(v.apilado_m||v.apilado_s||v.apilado_n||v.apilado_c)d.push("Material: nucleros "+(v.apilado_n||0)+" · cámaras "+(v.apilado_c||0)+" · 1/2 "+v.apilado_m+" · alzas "+v.apilado_s);
     if(v.cosecha_m||v.cosecha_s){var r=kgEst(v.cosecha_s||0,v.cosecha_m||0,v.cosecha_p);d.push("Cosecha: 1/2 "+v.cosecha_m+" · Alza "+v.cosecha_s+(v.cosecha_p&&v.cosecha_p<100?" al "+v.cosecha_p+"%":"")+" (≈ "+r[0]+"–"+r[1]+" kg)"+(v.lote?" · lote "+v.lote:""))}
     if(v.jarabe)d.push("Jarabe "+String(v.jarabe).replace(".",",")+" L"+(v.promotor_ml?" con promotor "+v.promotor_ml+" ml/L ("+String(Math.round(v.jarabe*v.promotor_ml*10)/10).replace(".",",")+" ml)":(v.promotor?" con promotor":"")));if(v.torta)d.push("Torta "+v.torta+" kg");if(v.nectar||v.polen)d.push("Natural: "+[v.nectar?"néctar "+v.nectar.toLowerCase():"",v.polen?"polen "+v.polen.toLowerCase():""].filter(Boolean).join(" · "));

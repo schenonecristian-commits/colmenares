@@ -48,8 +48,8 @@ campo_cols = [
     ("Colmenas", f'IFERROR(LET(r,SORT(FILTER({{{V("Colmenas")},{F},{CR}}},{C}=x,{V("Colmenas")}>0),2,FALSE,3,FALSE),lf,INDEX(r,1,2),lc,INDEX(r,1,3),INDEX(r,1,1)+IFERROR(SUM(FILTER({V("Traslado: colmenas")},{V("Traslado: destino")}=x,({F}>lf)+(({F}=lf)*({CR}>lc)))),0)),0)', 80, "0"),
     ("Última visita", f"MAXIFS({F},{C},x)", 90, "dd/mm/yy"),
     ("Días sin ir", f"TODAY()-MAXIFS({F},{C},x)", 70, "0"),
-    ("Alzas puestas", ult(ALZ_S, f"({ALZ_S}+{ALZ_M})>0"), 70, "0"),
-    ("½ alzas puestas", ult(ALZ_M, f"({ALZ_S}+{ALZ_M})>0"), 70, "0"),
+    ("Alzas puestas", ult(ALZ_S, f"(LEN({ALZ_S})+LEN({ALZ_M}))>0"), 70, "0"),
+    ("½ alzas puestas", ult(ALZ_M, f"(LEN({ALZ_S})+LEN({ALZ_M}))>0"), 70, "0"),
     ("Néctar", ult(V("Néctar"), f'{V("Néctar")}<>""'), 85, "@"),
     ("Polen", ult(V("Polen"), f'{V("Polen")}<>""'), 85, "@"),
     ("Última cura", f'LET(m,MAXIFS({F},{C},x,{V("Tareas")},"*Cura*"),IF(m=0,"sin registro",m))', 95, "dd/mm/yy"),
@@ -83,7 +83,7 @@ cel += kpis(4, [
 ], VERDE_S)
 cel.append(titulo("A7", "ESTADO DE CADA COLMENAR", VERDE, 12))
 cel.append(encab(f"A8:{CL[-1]}8", [c[0] for c in campo_cols], VERDE_S, VERDE))
-cel.append({"a1": "A9", "v": f'=LET(c,{C},f,{F},u,UNIQUE(FILTER(c,c<>"")),SORT(u,MAP(u,LAMBDA(x,MAXIFS(f,c,x))),FALSE))', "negrita": True})
+cel.append({"a1": "A9", "v": f'=LET(c,{C},f,{F},u,UNIQUE(FILTER(c,c<>"",NOT(REGEXMATCH(LOWER(c),"^galp")))),SORT(u,MAP(u,LAMBDA(x,MAXIFS(f,c,x))),FALSE))', "negrita": True})
 for i, (nom, expr, ancho, fmt) in enumerate(campo_cols):
     if expr:
         cel.append({"a1": f"{CL[i]}9", "v": por_colmenar(expr)})
@@ -123,6 +123,7 @@ partes = [
     si(f'{V("Polen")}<>""', f'" · polen "&LOWER({V("Polen")})'),
     si(f'{V("Cura: productos")}<>""', f'" · cura: "&{V("Cura: productos")}'),
     si(f'{V("Varroa %")}<>""', f'" · varroa "&{V("Varroa %")}&"%"'),
+    si(f'({V("Puse: alzas")}+{V("Puse: ½ alzas")})>0', f'" · puse "&IF({V("Puse: alzas")}="",0,{V("Puse: alzas")})&" alzas y "&IF({V("Puse: ½ alzas")}="",0,{V("Puse: ½ alzas")})&" ½ ("&IF({V("Puse: desde")}="apilado","del apilado","del galpón")&")"'),
     si(f'{ALZ_S}>0', f'" · "&{ALZ_S}&" alzas puestas"'),
     si(f'{ALZ_M}>0', f'" · "&{ALZ_M}&" ½ alzas puestas"'),
     si(f'({V("Cosecha: alzas")}+{V("Cosecha: 1/2 alzas")})>0', f'" · cosecha "&{V("Cosecha: alzas")}&" alzas y "&{V("Cosecha: 1/2 alzas")}&" ½"'),
@@ -232,6 +233,84 @@ sala_spec = {
 }
 
 
+# ---------------- MATERIAL ----------------
+AP = [V("Material: nucleros"), V("Material: cámaras"), V("Material: 1/2 alzas"), V("Material: alzas")]
+CONTADO = "(" + "+".join(f"LEN({a})" for a in AP) + ")>0"
+PUESTO = f"(LEN({ALZ_S})+LEN({ALZ_M}))>0"
+NM = 40; MF = 10 + NM
+def gal_calc(col, cos, puse):
+    """Galpón: último conteo + lo cosechado después en los colmenares − lo que salió del galpón después."""
+    desp = f"((({F}>gf)+(({F}=gf)*({CR}>gc)))>0)"
+    return (f'LET(gf,{ult(F, CONTADO)},gc,{ult(CR, CONTADO)},b,{ult(col, CONTADO)},IF(gf="","",b'
+            f'+SUMPRODUCT({desp}*NOT(REGEXMATCH(LOWER({C}),"^galp"))*{cos})'
+            f'-SUMPRODUCT({desp}*({V("Puse: desde")}="galpon")*{puse})))')
+def por_lugar(expr): return f'=MAP($A$11:$A${MF},LAMBDA(x,IF(x="","",{expr})))'
+mcols = [
+    ("Lugar", None, 190, "@"),
+    ("Conteo del", ult(F, CONTADO), 85, "dd/mm/yy"),
+    ("Días", f'LET(d,{ult(F, CONTADO)},IF(d="","",TODAY()-d))', 55, "0"),
+    ("Colmenas", 'IF(REGEXMATCH(LOWER(x),"^galp"),"",IFERROR(VLOOKUP(x,Campo!$A$9:$B$68,2,FALSE),""))', 75, "0"),
+    ("½ alzas puestas", ult(ALZ_M, PUESTO), 75, "0"),
+    ("Alzas puestas", ult(ALZ_S, PUESTO), 75, "0"),
+    ("Nucleros", ult(AP[0], CONTADO), 75, "0"),
+    ("Cámaras", ult(AP[1], CONTADO), 75, "0"),
+    ("½ alzas", f'IF(REGEXMATCH(LOWER(x),"^galp"),{gal_calc(AP[2], V("Cosecha: 1/2 alzas"), V("Puse: ½ alzas"))},{ult(AP[2], CONTADO)})', 75, "0"),
+    ("Alzas", f'IF(REGEXMATCH(LOWER(x),"^galp"),{gal_calc(AP[3], V("Cosecha: alzas"), V("Puse: alzas"))},{ult(AP[3], CONTADO)})', 75, "0"),
+]
+ML = [chr(65 + i) for i in range(len(mcols))]
+mc = [
+    titulo("A1", "MATERIAL", VERDE),
+    {"a1": "A2", "v": "Último conteo de cada lugar. Puesto = en las colmenas. Apilado = guardado en el colmenar o en el galpón.", "colorTexto": GRIS, "tam": 9},
+]
+R = f"$11:$" + str(MF)
+def S(L): return f"SUM({L}11:{L}{MF})"
+def SG(L): return f'SUMPRODUCT(REGEXMATCH(LOWER($A$11:$A${MF}),"^galp")*IFERROR({L}11:{L}{MF}*1,0))'
+tot = [
+    ("Cámaras", f"={S('D')}+{S('H')}", f'="en colmenas "&TEXT({S("D")},"0")&" · apiladas "&TEXT({S("H")},"0")'),
+    ("½ alzas", f"={S('E')}+{S('I')}", f'="puestas "&TEXT({S("E")},"0")&" · apiladas "&TEXT({S("I")},"0")'),
+    ("Alzas", f"={S('F')}+{S('J')}", f'="puestas "&TEXT({S("F")},"0")&" · apiladas "&TEXT({S("J")},"0")'),
+    ("Nucleros apilados", f"={S('G')}", '=""'),
+]
+for i, (et, fo, det) in enumerate(tot):
+    L = chr(65 + i)
+    mc += [
+        {"a1": f"{L}4", "v": et, "tam": 9, "colorTexto": GRIS, "fondo": VERDE_S},
+        {"a1": f"{L}5", "v": fo, "tam": 16, "negrita": True, "fondo": VERDE_S, "formato": "#,##0", "alinear": "left"},
+        {"a1": f"{L}6", "v": det, "tam": 8, "colorTexto": GRIS, "fondo": VERDE_S, "ajustar": True},
+    ]
+mc.append({"a1": "F4", "v": "En el galpón", "tam": 9, "colorTexto": GRIS})
+mc.append({"a1": "F5", "v": f'=ARRAYFORMULA(IF(COUNTIF(A11:A{MF},"galp*")=0,"Todavía sin conteo",TEXT({SG("H")},"0")&" cámaras · "&TEXT({SG("I")},"0")&" ½ alzas · "&TEXT({SG("J")},"0")&" alzas · "&TEXT({SG("G")},"0")&" nucleros"))', "tam": 11, "negrita": True})
+mc.append({"a1": "F5:J5", "combinar": True})
+mc.append({"a1": "F6", "v": "Contalo cargando en la app una visita a «Galpón». Después se calcula solo: último conteo + alzas cosechadas − alzas que salieron del galpón.", "tam": 8, "colorTexto": GRIS})
+mc.append(titulo("A8", "DÓNDE ESTÁ EL MATERIAL", VERDE, 12))
+mc.append({"en": "E9", "a1": "E9:F9", "v": [["PUESTO EN COLMENAS", ""]], "tam": 8, "negrita": True, "colorTexto": GRIS, "combinar": True, "alinear": "center"})
+mc.append({"en": "G9", "a1": "G9:J9", "v": [["APILADO", "", "", ""]], "tam": 8, "negrita": True, "colorTexto": GRIS, "combinar": True, "alinear": "center"})
+mc.append(encab(f"A10:{ML[-1]}10", [c[0] for c in mcols], VERDE_S, VERDE))
+mc.append({"a1": "A11", "v": f'=LET(c,{C},u,UNIQUE(FILTER(c,c<>"")),g,MAP(u,LAMBDA(x,IF(REGEXMATCH(LOWER(x),"^galp"),1,0))),SORT(u,g,TRUE,u,TRUE))', "negrita": True})
+for i, (nom, expr, ancho, fmt) in enumerate(mcols):
+    if expr: mc.append({"a1": f"{ML[i]}11", "v": por_lugar(expr)})
+    mc.append({"a1": f"{ML[i]}11:{ML[i]}{MF}", "formato": fmt})
+mc += [
+    {"a1": f"B11:J{MF}", "alinear": "center"},
+    {"a1": f"A11:J{MF}", "borde": {"medio": True, "abajo": True, "color": "#e3e7dc"}},
+    {"a1": f"G10:J{MF}", "borde": {"izq": True, "color": LINEA}},
+]
+cond_m = [
+    {"a1": f"A11:J{MF}", "formula": '=REGEXMATCH(LOWER($A11),"^galp")', "fondo": "#f1f3ec", "negrita": True},
+    {"a1": f"C11:C{MF}", "formula": '=AND(ISNUMBER($C11),$C11>=30)', "fondo": ROJO_S, "colorTexto": ROJO},
+    {"a1": f"C11:C{MF}", "formula": '=AND(ISNUMBER($C11),$C11>=15)', "fondo": AMAR},
+]
+for L in "GHIJ":
+    cond_m.append({"a1": f"{L}11:{L}{MF}", "formula": f'=AND(ISNUMBER(${L}11),${L}11>0,${L}11=MAX(${L}$11:${L}${MF}))', "fondo": "#cfe3b8", "negrita": True})
+material_spec = {
+    "hoja": "Material", "limpiar": True, "posicion": 3, "color": VERDE, "sinCuadricula": True, "fuente": FUENTE,
+    "filas": MF + 5, "columnas": len(mcols),
+    "anchos": {ML[i]: c[2] for i, c in enumerate(mcols)},
+    "altos": {"1": 36, "4": 26, "5": 32, "6": 30, "10": 36},
+    "celdas": mc, "congelarFilas": 10, "congelarColumnas": 1, "condicionales": cond_m,
+}
+sala_spec["posicion"] = 4
+
 def local(f):
     """Pasa una fórmula escrita con comas al formato de la planilla (Argentina): ; entre argumentos y \\ entre columnas de {}."""
     if not isinstance(f, str) or not f.startswith("="):
@@ -259,8 +338,8 @@ def localizar(spec):
     for k in spec.get("condicionales", []): k["formula"] = local(k["formula"])
     return spec
 
-for _s in (campo, cuaderno, sala_spec): localizar(_s)
-pedido = {"clave": os.environ["CLAVE"], "armar": [campo, cuaderno, sala_spec],
-          "mirar": [{"hoja": "Campo", "a1": "A1:N16"}, {"hoja": "Cuaderno", "a1": "A3:E8"}, {"hoja": "Sala", "a1": "A1:J24"}, {"hoja": "Sala", "a1": "L20:S24"}]}
+for _s in (campo, cuaderno, material_spec, sala_spec): localizar(_s)
+pedido = {"clave": os.environ["CLAVE"], "armar": [campo, cuaderno, material_spec, sala_spec],
+          "mirar": [{"hoja": "Campo", "a1": "A4:N18"}, {"hoja": "Material", "a1": "A1:J22"}]}
 json.dump(pedido, open(sys.argv[1], "w"), ensure_ascii=False)
 print("ok", len(json.dumps(pedido)))

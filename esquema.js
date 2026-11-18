@@ -11,6 +11,7 @@
       ["altas_nuc", "Altas: núcleos a cámara", "n"], ["altas_enj", "Altas: enjambres a cámara", "n"], ["altas_ing", "Altas: compradas", "n"],
       ["cat1", "Categoría I", "n"], ["cat2", "Categoría II", "n"], ["cat3", "Categoría III", "n"],
       ["quedan_m", "Alzas melarias: 1/2", "nn"], ["quedan_s", "Alzas melarias: alzas", "nn"],
+      ["puse_m", "Puse: ½ alzas", "nn"], ["puse_s", "Puse: alzas", "nn"], ["puse_origen", "Puse: desde", "s"],
       ["apilado_n", "Material: nucleros", "nn"], ["apilado_c", "Material: cámaras", "nn"], ["apilado_m", "Material: 1/2 alzas", "nn"], ["apilado_s", "Material: alzas", "nn"],
       ["cosecha_m", "Cosecha: 1/2 alzas", "n"], ["cosecha_s", "Cosecha: alzas", "n"], ["cosecha_p", "Cosecha: llenado %", "n"], ["lote", "Lote de extracción", "s"],
       ["jarabe", "Jarabe (L)", "n"], ["promotor", "Promotor", "b"], ["promotor_ml", "Promotor (ml/L)", "n"], ["torta", "Torta (kg)", "n"],
