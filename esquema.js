@@ -12,6 +12,7 @@
       ["cat1", "Categoría I", "n"], ["cat2", "Categoría II", "n"], ["cat3", "Categoría III", "n"],
       ["quedan_m", "Alzas melarias: 1/2", "nn"], ["quedan_s", "Alzas melarias: alzas", "nn"],
       ["puse_m", "Puse: ½ alzas", "nn"], ["puse_s", "Puse: alzas", "nn"], ["puse_origen", "Puse: desde", "s"],
+      ["nuevo_n", "Nuevo armado: nucleros", "nn"], ["nuevo_c", "Nuevo armado: cámaras", "nn"], ["nuevo_m", "Nuevo armado: ½ alzas", "nn"], ["nuevo_s", "Nuevo armado: alzas", "nn"],
       ["apilado_n", "Material: nucleros", "nn"], ["apilado_c", "Material: cámaras", "nn"], ["apilado_m", "Material: 1/2 alzas", "nn"], ["apilado_s", "Material: alzas", "nn"],
       ["cosecha_m", "Cosecha: 1/2 alzas", "n"], ["cosecha_s", "Cosecha: alzas", "n"], ["cosecha_p", "Cosecha: llenado %", "n"], ["lote", "Lote de extracción", "s"],
       ["jarabe", "Jarabe (L)", "n"], ["promotor", "Promotor", "b"], ["promotor_ml", "Promotor (ml/L)", "n"], ["torta", "Torta (kg)", "n"],

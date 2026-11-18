@@ -123,6 +123,7 @@ partes = [
     si(f'{V("Polen")}<>""', f'" · polen "&LOWER({V("Polen")})'),
     si(f'{V("Cura: productos")}<>""', f'" · cura: "&{V("Cura: productos")}'),
     si(f'{V("Varroa %")}<>""', f'" · varroa "&{V("Varroa %")}&"%"'),
+    si(f'(LEN({V("Nuevo armado: nucleros")})+LEN({V("Nuevo armado: cámaras")})+LEN({V("Nuevo armado: ½ alzas")})+LEN({V("Nuevo armado: alzas")}))>0', f'" · material nuevo armado: +"&IF({V("Nuevo armado: alzas")}="",0,{V("Nuevo armado: alzas")})&" alzas, +"&IF({V("Nuevo armado: ½ alzas")}="",0,{V("Nuevo armado: ½ alzas")})&" ½, +"&IF({V("Nuevo armado: cámaras")}="",0,{V("Nuevo armado: cámaras")})&" cámaras, +"&IF({V("Nuevo armado: nucleros")}="",0,{V("Nuevo armado: nucleros")})&" nucleros"'),
     si(f'({V("Puse: alzas")}+{V("Puse: ½ alzas")})>0', f'" · puse "&IF({V("Puse: alzas")}="",0,{V("Puse: alzas")})&" alzas y "&IF({V("Puse: ½ alzas")}="",0,{V("Puse: ½ alzas")})&" ½ ("&IF({V("Puse: desde")}="apilado","del apilado","del galpón")&")"'),
     si(f'{ALZ_S}>0', f'" · "&{ALZ_S}&" alzas puestas"'),
     si(f'{ALZ_M}>0', f'" · "&{ALZ_M}&" ½ alzas puestas"'),
@@ -238,12 +239,17 @@ AP = [V("Material: nucleros"), V("Material: cámaras"), V("Material: 1/2 alzas")
 CONTADO = "(" + "+".join(f"LEN({a})" for a in AP) + ")>0"
 PUESTO = f"(LEN({ALZ_S})+LEN({ALZ_M}))>0"
 NM = 40; MF = 10 + NM
-def gal_calc(col, cos, puse):
-    """Galpón: último conteo + lo cosechado después en los colmenares − lo que salió del galpón después."""
+def gal_calc(col, nuevo, cos=None, puse=None):
+    """Galpón: último conteo + material nuevo armado después + lo cosechado después en los colmenares − lo que salió del galpón después."""
     desp = f"((({F}>gf)+(({F}=gf)*({CR}>gc)))>0)"
-    return (f'LET(gf,{ult(F, CONTADO)},gc,{ult(CR, CONTADO)},b,{ult(col, CONTADO)},IF(gf="","",b'
-            f'+SUMPRODUCT({desp}*NOT(REGEXMATCH(LOWER({C}),"^galp"))*{cos})'
-            f'-SUMPRODUCT({desp}*({V("Puse: desde")}="galpon")*{puse})))')
+    g = f'REGEXMATCH(LOWER({C}),"^galp")'
+    f = (f'LET(gf,{ult(F, CONTADO)},gc,{ult(CR, CONTADO)},b,{ult(col, CONTADO)},IF(gf="","",b'
+         f'+SUMPRODUCT({desp}*{g}*{nuevo})')
+    if cos: f += f'+SUMPRODUCT({desp}*NOT({g})*{cos})'
+    if puse: f += f'-SUMPRODUCT({desp}*({V("Puse: desde")}="galpon")*{puse})'
+    return f + '))'
+def gal_o_ult(col, nuevo, cos=None, puse=None):
+    return f'IF(REGEXMATCH(LOWER(x),"^galp"),{gal_calc(col, nuevo, cos, puse)},{ult(col, CONTADO)})'
 def por_lugar(expr): return f'=MAP($A$11:$A${MF},LAMBDA(x,IF(x="","",{expr})))'
 mcols = [
     ("Lugar", None, 190, "@"),
@@ -252,10 +258,10 @@ mcols = [
     ("Colmenas", 'IF(REGEXMATCH(LOWER(x),"^galp"),"",IFERROR(VLOOKUP(x,Campo!$A$9:$B$68,2,FALSE),""))', 75, "0"),
     ("½ alzas puestas", ult(ALZ_M, PUESTO), 75, "0"),
     ("Alzas puestas", ult(ALZ_S, PUESTO), 75, "0"),
-    ("Nucleros", ult(AP[0], CONTADO), 75, "0"),
-    ("Cámaras", ult(AP[1], CONTADO), 75, "0"),
-    ("½ alzas", f'IF(REGEXMATCH(LOWER(x),"^galp"),{gal_calc(AP[2], V("Cosecha: 1/2 alzas"), V("Puse: ½ alzas"))},{ult(AP[2], CONTADO)})', 75, "0"),
-    ("Alzas", f'IF(REGEXMATCH(LOWER(x),"^galp"),{gal_calc(AP[3], V("Cosecha: alzas"), V("Puse: alzas"))},{ult(AP[3], CONTADO)})', 75, "0"),
+    ("Nucleros", gal_o_ult(AP[0], V("Nuevo armado: nucleros")), 75, "0"),
+    ("Cámaras", gal_o_ult(AP[1], V("Nuevo armado: cámaras")), 75, "0"),
+    ("½ alzas", gal_o_ult(AP[2], V("Nuevo armado: ½ alzas"), V("Cosecha: 1/2 alzas"), V("Puse: ½ alzas")), 75, "0"),
+    ("Alzas", gal_o_ult(AP[3], V("Nuevo armado: alzas"), V("Cosecha: alzas"), V("Puse: alzas")), 75, "0"),
 ]
 ML = [chr(65 + i) for i in range(len(mcols))]
 mc = [
@@ -281,7 +287,7 @@ for i, (et, fo, det) in enumerate(tot):
 mc.append({"a1": "F4", "v": "En el galpón", "tam": 9, "colorTexto": GRIS})
 mc.append({"a1": "F5", "v": f'=ARRAYFORMULA(IF(COUNTIF(A11:A{MF},"galp*")=0,"Todavía sin conteo",TEXT({SG("H")},"0")&" cámaras · "&TEXT({SG("I")},"0")&" ½ alzas · "&TEXT({SG("J")},"0")&" alzas · "&TEXT({SG("G")},"0")&" nucleros"))', "tam": 11, "negrita": True})
 mc.append({"a1": "F5:J5", "combinar": True})
-mc.append({"a1": "F6", "v": "Contalo cargando en la app una visita a «Galpón». Después se calcula solo: último conteo + alzas cosechadas − alzas que salieron del galpón.", "tam": 8, "colorTexto": GRIS})
+mc.append({"a1": "F6", "v": "Se calcula solo: último conteo + material nuevo armado + alzas cosechadas − alzas que salieron del galpón.", "tam": 8, "colorTexto": GRIS})
 mc.append(titulo("A8", "DÓNDE ESTÁ EL MATERIAL", VERDE, 12))
 mc.append({"en": "E9", "a1": "E9:F9", "v": [["PUESTO EN COLMENAS", ""]], "tam": 8, "negrita": True, "colorTexto": GRIS, "combinar": True, "alinear": "center"})
 mc.append({"en": "G9", "a1": "G9:J9", "v": [["APILADO", "", "", ""]], "tam": 8, "negrita": True, "colorTexto": GRIS, "combinar": True, "alinear": "center"})
