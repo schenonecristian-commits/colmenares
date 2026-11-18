@@ -1,5 +1,5 @@
 /* Guarda la app en el teléfono para que abra sin señal */
-var VERSION = "colmenares-v1";
+var VERSION = "colmenares-v2";
 var ARCHIVOS = ["./", "index.html", "esquema.js", "manifest.webmanifest", "icono-180.png", "icono-192.png", "icono-512.png"];
 
 self.addEventListener("install", function (e) {

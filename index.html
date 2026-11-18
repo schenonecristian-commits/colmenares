@@ -135,10 +135,12 @@ table.caja td.cb{width:28%;min-width:70px}table.caja td.cb i{display:block;heigh
 <div class="card">
 <b id="vform" hidden></b>
 <div class="row" style="align-items:flex-end"><div style="flex:1.6"><label>Colmenar</label>
-<input id="col" list="cols" placeholder="Ej: Gomez" autocomplete="off"></div>
+<input id="col" list="cols" placeholder="Ej: Gomez, o Galpón" autocomplete="off"></div>
 <div style="flex:0 0 138px"><label>Fecha</label>
 <input id="fec" type="date" style="padding:8px 6px;font-size:15px"></div></div>
 <datalist id="cols"></datalist>
+<div class="mut" id="galp-info" hidden style="margin-top:8px">Galpón: cargá solo el material que hay guardado. No cuenta como colmenar.</div>
+<div id="no-galp">
 <h3>Tareas</h3>
 <div class="chips" id="tar"></div>
 <div id="subtar"></div>
@@ -153,9 +155,11 @@ table.caja td.cb{width:28%;min-width:70px}table.caja td.cb i{display:block;heigh
 <label id="colml">Colmenas en el colmenar</label>
 <input id="colm" type="number" inputmode="numeric" min="0" placeholder="Cantidad de colmenas">
 <details id="d-cat"><summary>Categoría (aproximada)</summary><div class="mut" style="margin-top:6px">I: más de 7 cuadros de abejas · II: de 5 a 7 · III: menos de 5</div><div class="row"><div><label>I · Fuertes</label><input id="cat1" type="number" inputmode="numeric" min="0"></div><div><label>II · Medias</label><input id="cat2" type="number" inputmode="numeric" min="0"></div><div><label>III · Débiles</label><input id="cat3" type="number" inputmode="numeric" min="0"></div></div><div class="mut" id="catsum" style="margin-top:6px"></div></details>
-<h3>Alzas melarias</h3>
+<h3>Alzas melarias puestas</h3>
 <div class="row"><div><label>1/2 alza</label><input id="q_m" type="number" inputmode="numeric" min="0"></div><div><label>Alza</label><input id="q_s" type="number" inputmode="numeric" min="0"></div></div>
-<h3>Material</h3>
+</div>
+<h3 id="mat-h">Material apilado</h3>
+<div class="mut">Dejá vacío lo que no contaste. Poné 0 si no queda nada.</div>
 <div class="row"><div><label>Nucleros</label><input id="a_n" type="number" inputmode="numeric" min="0"></div><div><label>Cámaras de cría</label><input id="a_c" type="number" inputmode="numeric" min="0"></div></div>
 <div class="row"><div><label>1/2 alza</label><input id="a_m" type="number" inputmode="numeric" min="0"></div><div><label>Alza</label><input id="a_s" type="number" inputmode="numeric" min="0"></div></div>
 <div id="d-cos" hidden><h3>Cosecha</h3>
@@ -270,6 +274,12 @@ function hoy(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1
 function fmt(f){return f?f.split("-").reverse().join("-"):""}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function num(i){var v=parseInt($(i).value,10);return isNaN(v)?0:v}
+function esGalpon(n){return /^galp[oó]n/i.test(String(n||"").trim())}
+var G_PUESTAS=["q_m","q_s"],G_APILADO=["a_n","a_c","a_m","a_s"];
+/* Si cargaste algo del grupo, lo vacío cuenta como 0; si dejaste todo vacío, no lo contaste (null) */
+function grupo(ids){var algo=ids.some(function(i){return $(i).value.trim()!==""}),o={};ids.forEach(function(i){o[i]=algo?num(i):null});return o}
+function contado(){var a=arguments;for(var i=0;i<a.length;i++)if(a[i]!=null)return true;return false}
+function galpShow(){var g=esGalpon($("col").value);$("no-galp").hidden=g;$("galp-info").hidden=!g;$("mat-h").textContent=g?"Material en el galpón":"Material apilado"}
 function numf(i){var v=parseFloat(String($(i).value).replace(",","."));return isNaN(v)?0:v}
 
 function tab(t){Array.prototype.forEach.call(document.querySelectorAll("section.g"),function(x){x.hidden=true});["n","h","r","t","c"].forEach(function(k){$("v-"+k).hidden=k!=t;$("t-"+k).classList.toggle("on",k==t)});if(t=="h")lista();if(t=="r")resumen();if(t=="t"){campOpts();tLista()}if(t=="c")campanias()}
@@ -290,7 +300,7 @@ function chips(){
 function tarTxt(v){var ts=v.tareas||[];return ts.filter(function(x){return!esSub(x)}).map(function(x){var sb=(SUB[x]||[]).filter(function(y){return ts.indexOf(y)>=0});return x+(sb.length?" ("+sb.join(", ")+")":"")}).concat(ts.filter(function(x){return esSub(x)&&!Object.keys(SUB).some(function(k){return ts.indexOf(k)>=0&&SUB[k].indexOf(x)>=0})})).join(", ")}
 function detalle(){$("d-ali").hidden=tareas.indexOf("Alimentación")<0;$("d-cur").hidden=tareas.indexOf("Cura")<0;$("d-cos").hidden=tareas.indexOf("Cosecha")<0;$("d-tra").hidden=tareas.indexOf("Traslado")<0;$("d-mul").hidden=tareas.indexOf("Multiplicación")<0;$("d-var").hidden=tareas.indexOf("Monitoreo varroa")<0;curChips()}
 function curChips(){var c=$("cur");c.innerHTML="";PROD.forEach(function(n){var b=document.createElement("button");b.className="chip"+(cura.indexOf(n)>=0?" on":"");b.textContent=n;b.onclick=function(){var i=cura.indexOf(n);if(i>=0)cura.splice(i,1);else cura.push(n);curChips()};c.appendChild(b)})}
-$("col").oninput=function(){destinos();colShow()};$("c_s").oninput=kgShow;$("c_m").oninput=kgShow;$("c_p").oninput=kgShow;Array.prototype.forEach.call(document.querySelectorAll("#pchips .chip"),function(b){b.onclick=function(){$("c_p").value=b.getAttribute("data-p");kgShow()}});$("dest").onchange=function(){$("dest2").hidden=$("dest").value!="__otro"};
+$("col").oninput=function(){destinos();colShow();galpShow()};$("c_s").oninput=kgShow;$("c_m").oninput=kgShow;$("c_p").oninput=kgShow;Array.prototype.forEach.call(document.querySelectorAll("#pchips .chip"),function(b){b.onclick=function(){$("c_p").value=b.getAttribute("data-p");kgShow()}});$("dest").onchange=function(){$("dest2").hidden=$("dest").value!="__otro"};
 $("fec").value=hoy();estacion=estDe(hoy());chips();
 $("fec").onchange=function(){if($("fec").value)estacion=estDe($("fec").value)};
 
@@ -300,7 +310,7 @@ function kgShow(){var r=kgEst(num("c_s"),num("c_m"),num("c_p")||100);$("kgest").
 function kgTxt(c){return c.kmax?c.kmin+"–"+c.kmax:"—"}
 function kgCol(c){return(c.kmax&&c.col)?(c.kmin/c.col).toFixed(1)+"–"+(c.kmax/c.col).toFixed(1):"—"}
 function destVal(){var s=$("dest").value;return s=="__otro"?$("dest2").value.trim():s}
-function nombres(){lotesList();var s={};visitas.forEach(function(v){s[v.colmenar]=1;if(v.tras_col&&v.destino&&!Object.keys(s).some(function(n){return n.toLowerCase()==v.destino.trim().toLowerCase()}))s[v.destino.trim()]=1});var d=$("cols");d.innerHTML="";Object.keys(s).sort().forEach(function(n){var o=document.createElement("option");o.value=n;d.appendChild(o)});destinos()}
+function nombres(){lotesList();var s={};visitas.forEach(function(v){s[v.colmenar]=1;if(v.tras_col&&v.destino&&!Object.keys(s).some(function(n){return n.toLowerCase()==v.destino.trim().toLowerCase()}))s[v.destino.trim()]=1});if(!Object.keys(s).some(esGalpon))s["Galpón"]=1;var d=$("cols");d.innerHTML="";Object.keys(s).sort().forEach(function(n){var o=document.createElement("option");o.value=n;d.appendChild(o)});destinos()}
 
 function lsLeer(){try{return JSON.parse(localStorage.getItem(LS)||"[]")}catch(e){return[]}}
 function lsGuardar(){try{localStorage.setItem(LS,JSON.stringify(visitas))}catch(e){}}
@@ -340,17 +350,18 @@ var VIN=["colm","q_m","q_s","a_m","a_s","a_n","a_c","c_m","c_s","c_p","c_lote","
 function vReset(){
   VIN.forEach(function(i){$(i).value=""});$("dest").value="";$("dest2").hidden=true;cura=[];tareas=[];promo=0;natN="";natP="";vmues=[{a:0,v:0},{a:0,v:0},{a:0,v:0}];vedit=null;
   $("vform").hidden=true;$("vcancel").hidden=true;$("guardar").textContent="Guardar visita";$("d-ab").open=false;$("d-cat").open=false;
-  chips();vRows();kgShow();colShow();loteShow();
+  chips();vRows();kgShow();colShow();loteShow();galpShow();
 }
 function guardar(){
   var col=$("col").value.trim(),f=$("fec").value,m=$("msg");m.className="msg";
   if(!col||!f){m.className="msg err";m.textContent="Falta el colmenar o la fecha";return}
+  var gal=esGalpon(col);if(gal)tareas=[];var GP=grupo(G_PUESTAS),GA=grupo(G_APILADO);
   var T=function(t){return tareas.indexOf(t)>=0},cs=T("Cosecha"),hayCos=cs&&(num("c_m")||num("c_s")),sug=colSug();
   var old=vedit?visitas.filter(function(x){return x.id==vedit})[0]:null;
   var v={id:vedit||"v"+Date.now(),creado:old&&old.creado||Date.now(),colmenar:col,fecha:f,estacion:estDe(f),tareas:tareas.slice(),
-    colmenas:$("colm").value.trim()===""?(sug||0):num("colm"),
+    colmenas:gal?0:($("colm").value.trim()===""?(sug||0):num("colm")),
     bajas:{muertas:num("b_mu"),zanganeras:num("b_za"),huerfanas:num("b_hu"),loque:num("b_lo"),yeso:num("b_cy"),otra:num("b_ot")},altas_nuc:num("al_nu"),altas_enj:num("al_en"),altas_ing:num("al_in"),cat1:num("cat1"),cat2:num("cat2"),cat3:num("cat3"),
-    quedan_m:num("q_m"),quedan_s:num("q_s"),apilado_m:num("a_m"),apilado_s:num("a_s"),apilado_n:num("a_n"),apilado_c:num("a_c"),
+    quedan_m:gal?null:GP.q_m,quedan_s:gal?null:GP.q_s,apilado_m:GA.a_m,apilado_s:GA.a_s,apilado_n:GA.a_n,apilado_c:GA.a_c,
     cosecha_m:cs?num("c_m"):0,cosecha_s:cs?num("c_s"):0,cosecha_p:cs?(num("c_p")||100):100,lote:cs?($("c_lote").value.trim()||(hayCos?String(loteNext()):"")):"",
     obs:$("obs").value.trim(),jarabe:T("Alimentación")?numf("jar"):0,promotor:T("Alimentación")&&promo>0,promotor_ml:T("Alimentación")?promo:0,nectar:T("Alimentación")?natN:"",polen:T("Alimentación")?natP:"",torta:T("Alimentación")?numf("tor"):0,
     cura:T("Cura")?cura.slice():[],cura_det:T("Cura")?$("curd").value.trim():"",cura_lote:T("Cura")?$("curl").value.trim():"",
@@ -368,7 +379,8 @@ function cargar(id){
   var v=visitas.filter(function(x){return x.id==id})[0];if(!v)return;
   vedit=id;tab("n");$("col").value=v.colmenar;$("fec").value=v.fecha;estacion=v.estacion||estDe(v.fecha);tareas=(v.tareas||[]).slice();Object.keys(SUB).forEach(function(k){if(tareas.indexOf(k)<0&&SUB[k].some(function(x){return tareas.indexOf(x)>=0}))tareas.push(k)});promo=v.promotor_ml||(v.promotor?3:0);natN=v.nectar||"";natP=v.polen||"";cura=(v.cura||[]).slice();
   var b=v.bajas||{};
-  [["colm",v.colmenas],["q_m",v.quedan_m],["q_s",v.quedan_s],["a_m",v.apilado_m],["a_s",v.apilado_s],["a_n",v.apilado_n],["a_c",v.apilado_c],["c_m",v.cosecha_m],["c_s",v.cosecha_s],["c_p",v.cosecha_p&&v.cosecha_p<100?v.cosecha_p:0],["c_lote",v.lote],["obs",v.obs],["jar",v.jarabe],["tor",v.torta],["curd",v.cura_det],["curl",v.cura_lote],["trac",v.tras_col],["tran",v.tras_nuc],["muln",v.mult_nuc],["mulc",v.mult_can],["mulcr",v.mult_cel],["mulrf",v.mult_rf],["mulrv",v.mult_rv],["b_mu",b.muertas],["b_za",b.zanganeras],["b_hu",b.huerfanas],["b_lo",b.loque],["b_cy",b.yeso],["b_ot",b.otra],["al_nu",v.altas_nuc],["al_en",v.altas_enj],["al_in",v.altas_ing],["trae",v.tras_enj],["cat1",v.cat1],["cat2",v.cat2],["cat3",v.cat3]].forEach(function(x){sv(x[0],x[1])});
+  [["colm",v.colmenas],["c_m",v.cosecha_m],["c_s",v.cosecha_s],["c_p",v.cosecha_p&&v.cosecha_p<100?v.cosecha_p:0],["c_lote",v.lote],["obs",v.obs],["jar",v.jarabe],["tor",v.torta],["curd",v.cura_det],["curl",v.cura_lote],["trac",v.tras_col],["tran",v.tras_nuc],["muln",v.mult_nuc],["mulc",v.mult_can],["mulcr",v.mult_cel],["mulrf",v.mult_rf],["mulrv",v.mult_rv],["b_mu",b.muertas],["b_za",b.zanganeras],["b_hu",b.huerfanas],["b_lo",b.loque],["b_cy",b.yeso],["b_ot",b.otra],["al_nu",v.altas_nuc],["al_en",v.altas_enj],["al_in",v.altas_ing],["trae",v.tras_enj],["cat1",v.cat1],["cat2",v.cat2],["cat3",v.cat3]].forEach(function(x){sv(x[0],x[1])});
+  [["q_m",v.quedan_m],["q_s",v.quedan_s],["a_m",v.apilado_m],["a_s",v.apilado_s],["a_n",v.apilado_n],["a_c",v.apilado_c]].forEach(function(x){$(x[0]).value=x[1]==null?"":String(x[1])});galpShow();
   destinos();if(v.destino){$("dest").value=v.destino;if($("dest").selectedIndex<0||$("dest").value!=v.destino){$("dest").value="__otro";$("dest2").value=v.destino}}$("dest2").hidden=$("dest").value!="__otro";
   vmues=v.varroa&&v.varroa.length?v.varroa.map(function(x){return{a:x.a,v:x.v}}):[{a:0,v:0},{a:0,v:0},{a:0,v:0}];
   $("d-ab").open=bTot(b)+(v.altas_nuc||0)+(v.altas_enj||0)+(v.altas_ing||0)>0;$("d-cat").open=(v.cat1||0)+(v.cat2||0)+(v.cat3||0)>0;
@@ -430,6 +442,7 @@ function resumen(){
   var oc=campHoy(),names={};
   visitas.forEach(function(v){var n=v.colmenar.trim();if(!names[n.toLowerCase()])names[n.toLowerCase()]=n;var d=String(v.destino||"").trim();if(v.tras_col&&d&&!names[d.toLowerCase()])names[d.toLowerCase()]=d});
   var sAll=function(a,b){return despues(a,b)?-1:1};
+  Object.keys(names).forEach(function(k){if(esGalpon(k))delete names[k]});
   var R=Object.keys(names).map(function(ln){
     var n=names[ln],vs=visitas.filter(function(v){return v.colmenar.trim().toLowerCase()==ln}).sort(sAll),vc=vs.filter(function(v){return campDe(v.fecha)==oc});
     var x={n:n,ln:ln,vs:vs,vc:vc,ult:vs[0]||null,col:colAct(n,"9999-12-31",null).base||0};
@@ -446,7 +459,7 @@ function resumen(){
     x.cat=vs.filter(function(v){return(v.cat1||0)+(v.cat2||0)+(v.cat3||0)>0})[0]||null;
     x.cura=vs.filter(function(v){return(v.tareas||[]).indexOf("Cura")>=0})[0]||null;x.ncura=vc.filter(function(v){return(v.tareas||[]).indexOf("Cura")>=0}).length;
     x.var=vs.filter(function(v){return v.varroa_pct!=null});
-    x.mat=vs.filter(function(v){return v.apilado_n||v.apilado_c||v.apilado_m||v.apilado_s||v.quedan_m||v.quedan_s})[0]||null;
+    x.mat=vs.filter(function(v){return contado(v.apilado_n,v.apilado_c,v.apilado_m,v.apilado_s,v.quedan_m,v.quedan_s)&&(v.apilado_n||v.apilado_c||v.apilado_m||v.apilado_s||v.quedan_m||v.quedan_s||v.creado>1794990000000)})[0]||null;
     x.mant={};["Corte de pasto","Reparación de alambre","Aplicación de herbicida"].forEach(function(t){var w=vs.filter(function(v){return(v.tareas||[]).indexOf(t)>=0})[0];if(w)x.mant[t]=w.fecha});
     x.obs=vs.filter(function(v){return v.obs}).slice(0,3);x.nat=vs.filter(function(v){return v.nectar||v.polen})[0]||null;
     var tp=tPropios(oc).filter(function(t){return String(t.colmenar||"").trim().toLowerCase()==ln});x.tn=tp.length;x.tkg=0;x.tpend=0;tp.forEach(function(t){x.tkg+=tEst(t);if(!t.neto)x.tpend++});
