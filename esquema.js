@@ -22,7 +22,7 @@
       ["destino", "Traslado: destino", "s"], ["tras_col", "Traslado: colmenas", "n"], ["tras_nuc", "Traslado: núcleos", "n"], ["tras_enj", "Traslado: enjambres", "n"],
       ["mult_nuc", "Multiplicación: núcleos", "n"], ["mult_can", "Multiplicación: canasto técnico", "n"], ["mult_cel", "Multiplicación: celdas reales", "n"],
       ["mult_rf", "Multiplicación: reinas fecundadas", "n"], ["mult_rv", "Multiplicación: reinas vírgenes", "n"],
-      ["obs", "Observaciones", "s"], ["id", "ID", "s"], ["creado", "Creado", "nn"]
+      ["obs", "Observaciones", "s"], ["origen", "Origen", "s"], ["id", "ID", "s"], ["creado", "Creado", "nn"]
     ],
     tambores: [
       ["campana", "Campaña (año de inicio)", "n"], ["numero", "N° de llenado", "n"], ["etiqueta", "Etiqueta", "s"], ["tipo", "Tipo", "s"],

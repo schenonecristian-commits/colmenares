@@ -48,8 +48,8 @@ campo_cols = [
     ("Colmenas", f'IFERROR(LET(r,SORT(FILTER({{{V("Colmenas")},{F},{CR}}},{C}=x,{V("Colmenas")}>0),2,FALSE,3,FALSE),lf,INDEX(r,1,2),lc,INDEX(r,1,3),INDEX(r,1,1)+IFERROR(SUM(FILTER({V("Traslado: colmenas")},{V("Traslado: destino")}=x,({F}>lf)+(({F}=lf)*({CR}>lc)))),0)),0)', 80, "0"),
     ("Última visita", f"MAXIFS({F},{C},x)", 90, "dd/mm/yy"),
     ("Días sin ir", f"TODAY()-MAXIFS({F},{C},x)", 70, "0"),
-    ("Alzas puestas", ult(ALZ_S, f"(LEN({ALZ_S})+LEN({ALZ_M}))>0"), 70, "0"),
-    ("½ alzas puestas", ult(ALZ_M, f"(LEN({ALZ_S})+LEN({ALZ_M}))>0"), 70, "0"),
+    ("Alzas puestas", ult(ALZ_S, f"((LEN({ALZ_S})+LEN({ALZ_M}))>0)*({F}>={INI})"), 70, "0"),
+    ("½ alzas puestas", ult(ALZ_M, f"((LEN({ALZ_S})+LEN({ALZ_M}))>0)*({F}>={INI})"), 70, "0"),
     ("Néctar", ult(V("Néctar"), f'{V("Néctar")}<>""'), 85, "@"),
     ("Polen", ult(V("Polen"), f'{V("Polen")}<>""'), 85, "@"),
     ("Última cura", f'LET(m,MAXIFS({F},{C},x,{V("Tareas")},"*Cura*"),IF(m=0,"sin registro",m))', 95, "dd/mm/yy"),
@@ -83,7 +83,7 @@ cel += kpis(4, [
 ], VERDE_S)
 cel.append(titulo("A7", "ESTADO DE CADA COLMENAR", VERDE, 12))
 cel.append(encab(f"A8:{CL[-1]}8", [c[0] for c in campo_cols], VERDE_S, VERDE))
-cel.append({"a1": "A9", "v": f'=LET(c,{C},f,{F},u,UNIQUE(FILTER(c,c<>"",NOT(REGEXMATCH(LOWER(c),"^galp")))),SORT(u,MAP(u,LAMBDA(x,MAXIFS(f,c,x))),FALSE))', "negrita": True})
+cel.append({"a1": "A9", "v": f'=LET(c,{C},f,{F},u,UNIQUE(FILTER(c,c<>"",NOT(REGEXMATCH(LOWER(c),"^galp")),f>=$B$2)),SORT(u,MAP(u,LAMBDA(x,MAXIFS(f,c,x))),FALSE))', "negrita": True})
 for i, (nom, expr, ancho, fmt) in enumerate(campo_cols):
     if expr:
         cel.append({"a1": f"{CL[i]}9", "v": por_colmenar(expr)})
@@ -236,16 +236,19 @@ sala_spec = {
 
 # ---------------- MATERIAL ----------------
 AP = [V("Material: nucleros"), V("Material: cámaras"), V("Material: 1/2 alzas"), V("Material: alzas")]
-CONTADO = "(" + "+".join(f"LEN({a})" for a in AP) + ")>0"
-PUESTO = f"(LEN({ALZ_S})+LEN({ALZ_M}))>0"
+INI_M = "DATE(IF(MONTH(TODAY())>=5,YEAR(TODAY()),YEAR(TODAY())-1),5,1)"
+CONTADO_G = "(" + "+".join(f"LEN({a})" for a in AP) + ")>0"
+CONTADO = f"({CONTADO_G})*({F}>={INI_M})"
+PUESTO = f"((LEN({ALZ_S})+LEN({ALZ_M}))>0)*({F}>={INI_M})"
+NO_WA = f'({V("Origen")}<>"WhatsApp")'
 NM = 40; MF = 10 + NM
 def gal_calc(col, nuevo, cos=None, puse=None):
     """Galpón: último conteo + material nuevo armado después + lo cosechado después en los colmenares − lo que salió del galpón después."""
     desp = f"((({F}>gf)+(({F}=gf)*({CR}>gc)))>0)"
     g = f'REGEXMATCH(LOWER({C}),"^galp")'
-    f = (f'LET(gf,{ult(F, CONTADO)},gc,{ult(CR, CONTADO)},b,{ult(col, CONTADO)},IF(gf="","",b'
+    f = (f'LET(gf,{ult(F, CONTADO_G)},gc,{ult(CR, CONTADO_G)},b,{ult(col, CONTADO_G)},IF(gf="","",b'
          f'+SUMPRODUCT({desp}*{g}*{nuevo})')
-    if cos: f += f'+SUMPRODUCT({desp}*NOT({g})*{cos})'
+    if cos: f += f'+SUMPRODUCT({desp}*NOT({g})*{NO_WA}*{cos})'
     if puse: f += f'-SUMPRODUCT({desp}*({V("Puse: desde")}="galpon")*{puse})'
     return f + '))'
 def gal_o_ult(col, nuevo, cos=None, puse=None):
@@ -253,8 +256,8 @@ def gal_o_ult(col, nuevo, cos=None, puse=None):
 def por_lugar(expr): return f'=MAP($A$11:$A${MF},LAMBDA(x,IF(x="","",{expr})))'
 mcols = [
     ("Lugar", None, 190, "@"),
-    ("Conteo del", ult(F, CONTADO), 85, "dd/mm/yy"),
-    ("Días", f'LET(d,{ult(F, CONTADO)},IF(d="","",TODAY()-d))', 55, "0"),
+    ("Conteo del", f'IF(REGEXMATCH(LOWER(x),"^galp"),{ult(F, CONTADO_G)},{ult(F, CONTADO)})', 85, "dd/mm/yy"),
+    ("Días", f'LET(d,IF(REGEXMATCH(LOWER(x),"^galp"),{ult(F, CONTADO_G)},{ult(F, CONTADO)}),IF(d="","",TODAY()-d))', 55, "0"),
     ("Colmenas", 'IF(REGEXMATCH(LOWER(x),"^galp"),"",IFERROR(VLOOKUP(x,Campo!$A$9:$B$68,2,FALSE),""))', 75, "0"),
     ("½ alzas puestas", ult(ALZ_M, PUESTO), 75, "0"),
     ("Alzas puestas", ult(ALZ_S, PUESTO), 75, "0"),
@@ -266,7 +269,7 @@ mcols = [
 ML = [chr(65 + i) for i in range(len(mcols))]
 mc = [
     titulo("A1", "MATERIAL", VERDE),
-    {"a1": "A2", "v": "Último conteo de cada lugar. Puesto = en las colmenas. Apilado = guardado en el colmenar o en el galpón.", "colorTexto": GRIS, "tam": 9},
+    {"a1": "A2", "v": "Último conteo de cada lugar con visitas en la campaña actual. Puesto = en las colmenas. Apilado = guardado en el colmenar o en el galpón.", "colorTexto": GRIS, "tam": 9},
 ]
 R = f"$11:$" + str(MF)
 def S(L): return f"SUM({L}11:{L}{MF})"
@@ -292,7 +295,7 @@ mc.append(titulo("A8", "DÓNDE ESTÁ EL MATERIAL", VERDE, 12))
 mc.append({"en": "E9", "a1": "E9:F9", "v": [["PUESTO EN COLMENAS", ""]], "tam": 8, "negrita": True, "colorTexto": GRIS, "combinar": True, "alinear": "center"})
 mc.append({"en": "G9", "a1": "G9:J9", "v": [["APILADO", "", "", ""]], "tam": 8, "negrita": True, "colorTexto": GRIS, "combinar": True, "alinear": "center"})
 mc.append(encab(f"A10:{ML[-1]}10", [c[0] for c in mcols], VERDE_S, VERDE))
-mc.append({"a1": "A11", "v": f'=LET(c,{C},u,UNIQUE(FILTER(c,c<>"")),g,MAP(u,LAMBDA(x,IF(REGEXMATCH(LOWER(x),"^galp"),1,0))),SORT(u,g,TRUE,u,TRUE))', "negrita": True})
+mc.append({"a1": "A11", "v": f'=LET(c,{C},f,{F},u,UNIQUE(FILTER(c,c<>"",(f>=DATE(IF(MONTH(TODAY())>=5,YEAR(TODAY()),YEAR(TODAY())-1),5,1))+REGEXMATCH(LOWER(c),"^galp"))),g,MAP(u,LAMBDA(x,IF(REGEXMATCH(LOWER(x),"^galp"),1,0))),SORT(u,g,TRUE,u,TRUE))', "negrita": True})
 for i, (nom, expr, ancho, fmt) in enumerate(mcols):
     if expr: mc.append({"a1": f"{ML[i]}11", "v": por_lugar(expr)})
     mc.append({"a1": f"{ML[i]}11:{ML[i]}{MF}", "formato": fmt})

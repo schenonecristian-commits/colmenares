@@ -287,8 +287,9 @@ var pOrig="galpon";
 function antesDe(v,ed){return ed&&(v.id==ed.id||despues(v,ed))}
 function ultimo(pred){var c=$("col").value.trim().toLowerCase(),f=$("fec").value||hoy(),ed=vedit?visitas.filter(function(x){return x.id==vedit})[0]:null,b=null;
   visitas.forEach(function(v){if(v.colmenar.trim().toLowerCase()!=c||v.fecha>f||antesDe(v,ed)||!pred(v))return;if(!b||despues(v,b))b=v});return b}
-function alzPrev(){return ultimo(function(v){return contado(v.quedan_m,v.quedan_s)})}
-function apPrev(){return ultimo(function(v){return contado(v.apilado_n,v.apilado_c,v.apilado_m,v.apilado_s)})}
+function campAct(){return campDe($("fec").value||hoy())}
+function alzPrev(){var o=campAct();return ultimo(function(v){return campDe(v.fecha)==o&&contado(v.quedan_m,v.quedan_s)})}
+function apPrev(){var o=campAct();return ultimo(function(v){return campDe(v.fecha)==o&&contado(v.apilado_n,v.apilado_c,v.apilado_m,v.apilado_s)})}
 function cosHoy(){var c=tareas.indexOf("Cosecha")>=0;return{m:c?num("c_m"):0,s:c?num("c_s"):0}}
 function alzCalc(){var p=alzPrev(),k=cosHoy(),pm=num("p_m"),ps=num("p_s");
   if(p)return{m:Math.max(0,(p.quedan_m||0)-k.m+pm),s:Math.max(0,(p.quedan_s||0)-k.s+ps),prev:p};
@@ -297,7 +298,7 @@ function alzCalc(){var p=alzPrev(),k=cosHoy(),pm=num("p_m"),ps=num("p_s");
 function galStock(){var g=null;visitas.forEach(function(v){if(esGalpon(v.colmenar)&&contado(v.apilado_m,v.apilado_s)&&(!g||despues(v,g)))g=v});if(!g)return null;
   var m=g.apilado_m||0,s=g.apilado_s||0,c=g.apilado_c||0,n=g.apilado_n||0;visitas.forEach(function(v){if(v.id==vedit||!despues(v,g))return;
     if(esGalpon(v.colmenar)){m+=(v.nuevo_m||0);s+=(v.nuevo_s||0);c+=(v.nuevo_c||0);n+=(v.nuevo_n||0);return}
-    m+=(v.cosecha_m||0);s+=(v.cosecha_s||0);if(v.puse_origen=="galpon"){m-=(v.puse_m||0);s-=(v.puse_s||0)}});return{m:m,s:s,c:c,n:n,fecha:g.fecha}}
+    if(v.origen=="WhatsApp")return;m+=(v.cosecha_m||0);s+=(v.cosecha_s||0);if(v.puse_origen=="galpon"){m-=(v.puse_m||0);s-=(v.puse_s||0)}});return{m:m,s:s,c:c,n:n,fecha:g.fecha}}
 function alzShow(){
   var p=alzPrev(),k=cosHoy(),pm=num("p_m"),ps=num("p_s"),r=alzCalc();
   $("alz-prev").textContent=p?"Había "+(p.quedan_s||0)+" alzas y "+(p.quedan_m||0)+" ½ alzas puestas (visita del "+fmt(p.fecha)+")":"Sin conteo anterior de alzas puestas en este colmenar";
@@ -484,6 +485,8 @@ function resumen(){
   visitas.forEach(function(v){var n=v.colmenar.trim();if(!names[n.toLowerCase()])names[n.toLowerCase()]=n;var d=String(v.destino||"").trim();if(v.tras_col&&d&&!names[d.toLowerCase()])names[d.toLowerCase()]=d});
   var sAll=function(a,b){return despues(a,b)?-1:1};
   Object.keys(names).forEach(function(k){if(esGalpon(k))delete names[k]});
+  /* solo los colmenares con movimiento en la campaña actual */
+  Object.keys(names).forEach(function(k){if(!visitas.some(function(v){return campDe(v.fecha)==oc&&(v.colmenar.trim().toLowerCase()==k||(v.tras_col&&String(v.destino||"").trim().toLowerCase()==k))}))delete names[k]});
   var R=Object.keys(names).map(function(ln){
     var n=names[ln],vs=visitas.filter(function(v){return v.colmenar.trim().toLowerCase()==ln}).sort(sAll),vc=vs.filter(function(v){return campDe(v.fecha)==oc});
     var x={n:n,ln:ln,vs:vs,vc:vc,ult:vs[0]||null,col:colAct(n,"9999-12-31",null).base||0};
@@ -500,7 +503,7 @@ function resumen(){
     x.cat=vs.filter(function(v){return(v.cat1||0)+(v.cat2||0)+(v.cat3||0)>0})[0]||null;
     x.cura=vs.filter(function(v){return(v.tareas||[]).indexOf("Cura")>=0})[0]||null;x.ncura=vc.filter(function(v){return(v.tareas||[]).indexOf("Cura")>=0}).length;
     x.var=vs.filter(function(v){return v.varroa_pct!=null});
-    x.mat=vs.filter(function(v){return contado(v.apilado_n,v.apilado_c,v.apilado_m,v.apilado_s,v.quedan_m,v.quedan_s)&&(v.apilado_n||v.apilado_c||v.apilado_m||v.apilado_s||v.quedan_m||v.quedan_s||v.creado>1794990000000)})[0]||null;
+    x.mat=vc.filter(function(v){return contado(v.apilado_n,v.apilado_c,v.apilado_m,v.apilado_s,v.quedan_m,v.quedan_s)&&(v.apilado_n||v.apilado_c||v.apilado_m||v.apilado_s||v.quedan_m||v.quedan_s||v.creado>1794990000000)})[0]||null;
     x.mant={};["Corte de pasto","Reparación de alambre","Aplicación de herbicida"].forEach(function(t){var w=vs.filter(function(v){return(v.tareas||[]).indexOf(t)>=0})[0];if(w)x.mant[t]=w.fecha});
     x.obs=vs.filter(function(v){return v.obs}).slice(0,3);x.nat=vs.filter(function(v){return v.nectar||v.polen})[0]||null;
     var tp=tPropios(oc).filter(function(t){return String(t.colmenar||"").trim().toLowerCase()==ln});x.tn=tp.length;x.tkg=0;x.tpend=0;tp.forEach(function(t){x.tkg+=tEst(t);if(!t.neto)x.tpend++});
