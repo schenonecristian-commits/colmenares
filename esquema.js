@@ -8,7 +8,7 @@
       ["colmenas", "Colmenas", "n"],
       ["bajas.muertas", "Bajas: muertas", "n"], ["bajas.zanganeras", "Bajas: zanganeras", "n"], ["bajas.huerfanas", "Bajas: huérfanas", "n"],
       ["bajas.loque", "Bajas: loque", "n"], ["bajas.yeso", "Bajas: cría yesificada", "n"], ["bajas.otra", "Bajas: otra causa", "n"],
-      ["altas_nuc", "Altas: núcleos a cámara", "n"], ["altas_enj", "Altas: enjambres a cámara", "n"], ["altas_ing", "Altas: compradas", "n"],
+      ["altas_nuc", "Altas: núcleos a cámara", "n"], ["altas_enj", "Altas: enjambres a cámara", "n"], ["altas_ing", "Altas: compradas", "n"], ["altas_ing_tipo", "Altas: compradas (tipo)", "s"], ["altas_ing_prov", "Altas: proveedor", "s"],
       ["cat1", "Categoría I", "n"], ["cat2", "Categoría II", "n"], ["cat3", "Categoría III", "n"],
       ["quedan_m", "Alzas melarias: 1/2", "nn"], ["quedan_s", "Alzas melarias: alzas", "nn"],
       ["puse_m", "Puse: ½ alzas", "nn"], ["puse_s", "Puse: alzas", "nn"], ["puse_origen", "Puse: desde", "s"],
