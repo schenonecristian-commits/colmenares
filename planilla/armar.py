@@ -320,6 +320,69 @@ material_spec = {
 }
 sala_spec["posicion"] = 4
 
+# ---------------- REPOSICIÓN ----------------
+RI = "Campo!$B$2"
+TIPO, CANT, PROV = V("Altas: compradas (tipo)"), V("Altas: compradas"), V("Altas: proveedor")
+OLM = "Olmos (Savegnago)"
+rc = [
+    titulo("A1", "REPOSICIÓN 26-27", VERDE),
+    {"a1": "A2", "v": "Cómo se rearman las colmenas en esta campaña. La tabla de compras (filas 9 a 20) la podés editar a mano; lo demás se calcula con lo que cargás en la app.", "colorTexto": GRIS, "tam": 9},
+]
+rc += kpis(4, [
+    ("Núcleos comprados (recibidos + por llegar)", '=SUMIFS(D9:D20,C9:C20,"Núcleos",E9:E20,"Recibido")+SUMIFS(D9:D20,C9:C20,"Núcleos",E9:E20,"Por llegar")', "#,##0"),
+    ("Recibidos (cargados en la app)", f'=SUMIFS({CANT},{TIPO},"nucleos",{F},">="&{RI})', "#,##0"),
+    ("Por llegar", '=SUMIFS(D9:D20,E9:E20,"Por llegar")', "#,##0"),
+    ("A confirmar", '=SUMIFS(D9:D20,E9:E20,"A confirmar")', "#,##0"),
+    ("Enjambres a cámara", f'=SUMIFS({V("Altas: enjambres a cámara")},{F},">="&{RI})', "#,##0"),
+    ("Colmenas hoy", "=Campo!A5", "#,##0"),
+], VERDE_S)
+rc.append(titulo("A7", "COMPRAS", VERDE, 12))
+rc.append(encab("A8:F8", ["Fecha", "Proveedor", "Tipo", "Cantidad", "Estado", "Nota"], VERDE_S, VERDE))
+rc += [
+    {"a1": "A9:A20", "formato": "dd/mm/yy"}, {"a1": "D9:D20", "formato": "#,##0", "alinear": "center"},
+    {"a1": "C9:C20", "lista": ["Núcleos", "Colmenas"]}, {"a1": "E9:E20", "lista": ["Recibido", "Por llegar", "A confirmar", "Cancelado"]},
+    {"a1": "A9:F20", "borde": {"medio": True, "abajo": True, "color": "#e3e7dc"}, "valinear": "top"},
+    {"a1": "F9:F20", "ajustar": True},
+]
+rc.append(titulo("A23", "DE DÓNDE SALEN LAS COLMENAS DE LA CAMPAÑA", VERDE, 12))
+orig = [
+    ["Núcleos comprados (recibidos)", f'=SUMIFS({CANT},{TIPO},"nucleos",{F},">="&{RI})'],
+    ["Colmenas compradas", f'=SUMIFS({CANT},{TIPO},"colmenas",{F},">="&{RI})'],
+    ["Compradas sin tipo", f'=SUMIFS({CANT},{TIPO},"",{F},">="&{RI})'],
+    ["Enjambres pasados a cámara", f'=SUMIFS({V("Altas: enjambres a cámara")},{F},">="&{RI})'],
+    ["Núcleos propios pasados a cámara", f'=SUMIFS({V("Altas: núcleos a cámara")},{F},">="&{RI})'],
+    ["Bajas", "=-Campo!D5"],
+    ["Total", "=SUM(B24:B29)"],
+    ["Colmenas hoy (hoja Campo)", "=Campo!A5"],
+]
+rc.append({"en": "A24", "v": orig})
+rc += [
+    {"a1": "B24:B31", "formato": "#,##0;-#,##0;—", "alinear": "center"},
+    {"a1": "A30:B30", "negrita": True, "borde": {"arriba": True, "color": VERDE}},
+    {"a1": "A31:B31", "colorTexto": GRIS},
+    {"a1": "A32", "v": "Si Total y Colmenas hoy no coinciden, falta cargar alguna alta, baja o compra (o hay colmenas de antes de la campaña).", "tam": 8, "colorTexto": GRIS},
+]
+rc.append(titulo("D23", "DESDE OLMOS (BASE)", VERDE, 12))
+rc.append(encab("D24:E24", ["Llevadas a", "Colmenas"], VERDE_S, VERDE))
+TD_, TC_ = V("Traslado: destino"), V("Traslado: colmenas")
+rc.append({"a1": "D25", "v": f'=IFERROR(LET(d,FILTER({TD_},{C}="{OLM}",{TC_}>0,{F}>={RI}),u,UNIQUE(d),HSTACK(u,MAP(u,LAMBDA(x,SUMIFS({TC_},{C},"{OLM}",{TD_},x,{F},">="&{RI}))))),"Todavía no hay traslados desde Olmos")'})
+rc += [
+    {"a1": "E25:E40", "formato": "#,##0", "alinear": "center"},
+    {"a1": "D25:E40", "borde": {"medio": True, "abajo": True, "color": "#e3e7dc"}},
+    {"a1": "D42", "v": "Total llevadas", "negrita": True}, {"a1": "E42", "v": "=SUM(E25:E40)", "negrita": True, "formato": "#,##0", "alinear": "center"},
+    {"a1": "D43", "v": "Quedan en Olmos", "colorTexto": GRIS}, {"a1": "E43", "v": f'=IFERROR(VLOOKUP("{OLM}",Campo!$A$9:$B$68,2,FALSE),0)', "formato": "#,##0", "alinear": "center", "colorTexto": GRIS},
+]
+reposicion_spec = {
+    "hoja": "Reposición 26-27", "limpiar": False, "posicion": 2, "color": VERDE, "sinCuadricula": True, "fuente": FUENTE,
+    "filas": 60, "columnas": 6,
+    "anchos": {"A": 230, "B": 230, "C": 90, "D": 190, "E": 100, "F": 260},
+    "altos": {"1": 36, "4": 30, "5": 32, "8": 30},
+    "celdas": rc, "congelarFilas": 2,
+}
+for _k in ("cuaderno", "material_spec", "sala_spec"):
+    pass
+cuaderno["posicion"] = 3; material_spec["posicion"] = 4; sala_spec["posicion"] = 5
+
 def local(f):
     """Pasa una fórmula escrita con comas al formato de la planilla (Argentina): ; entre argumentos y \\ entre columnas de {}."""
     if not isinstance(f, str) or not f.startswith("="):
@@ -347,8 +410,8 @@ def localizar(spec):
     for k in spec.get("condicionales", []): k["formula"] = local(k["formula"])
     return spec
 
-for _s in (campo, cuaderno, material_spec, sala_spec): localizar(_s)
-pedido = {"clave": os.environ["CLAVE"], "armar": [campo, cuaderno, material_spec, sala_spec],
+for _s in (campo, reposicion_spec, cuaderno, material_spec, sala_spec): localizar(_s)
+pedido = {"clave": os.environ["CLAVE"], "armar": [campo, reposicion_spec, cuaderno, material_spec, sala_spec],
           "mirar": [{"hoja": "Campo", "a1": "A4:N18"}, {"hoja": "Material", "a1": "A1:J22"}]}
 json.dump(pedido, open(sys.argv[1], "w"), ensure_ascii=False)
 print("ok", len(json.dumps(pedido)))
