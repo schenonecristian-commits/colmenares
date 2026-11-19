@@ -352,15 +352,16 @@ orig = [
     ["Enjambres pasados a cámara", f'=SUMIFS({V("Altas: enjambres a cámara")},{F},">="&{RI})'],
     ["Núcleos propios pasados a cámara", f'=SUMIFS({V("Altas: núcleos a cámara")},{F},">="&{RI})'],
     ["Bajas", "=-Campo!D5"],
-    ["Total", "=SUM(B24:B29)"],
-    ["Colmenas hoy (hoja Campo)", "=Campo!A5"],
+    ["Sobrevivientes y enjambres sin registrar", "=MAX(0,Campo!A5-SUM(B24:B29))"],
+    ["Total = colmenas hoy", "=SUM(B24:B30)"],
 ]
 rc.append({"en": "A24", "v": orig})
 rc += [
     {"a1": "B24:B31", "formato": "#,##0;-#,##0;—", "alinear": "center"},
-    {"a1": "A30:B30", "negrita": True, "borde": {"arriba": True, "color": VERDE}},
-    {"a1": "A31:B31", "colorTexto": GRIS},
-    {"a1": "A32", "v": "Si Total y Colmenas hoy no coinciden, falta cargar alguna alta, baja o compra (o hay colmenas de antes de la campaña).", "tam": 8, "colorTexto": GRIS},
+    {"a1": "A24:B30", "negrita": False, "colorTexto": "#161a12", "borde": {"arriba": False, "abajo": False}},
+    {"a1": "A30:B30", "colorTexto": GRIS, "italica": True},
+    {"a1": "A31:B31", "negrita": True, "colorTexto": "#161a12", "borde": {"arriba": True, "color": VERDE}},
+    {"a1": "A32", "v": "Sobrevivientes y enjambres sin registrar = colmenas hoy − lo cargado arriba. De ahora en más, los enjambres que caigan cargalos en la app como «Enjambres pasados a cámara».", "tam": 8, "colorTexto": GRIS},
 ]
 rc.append(titulo("D23", "DESDE OLMOS (BASE)", VERDE, 12))
 rc.append(encab("D24:E24", ["Llevadas a", "Colmenas"], VERDE_S, VERDE))
